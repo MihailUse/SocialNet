@@ -15,8 +15,9 @@ namespace API
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
-            builder.Services.AddDbContext<DAL.DataContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("PostgresSQL")));
-
+            builder.Services.AddDbContext<DAL.DataContext>(options =>
+                options.UseNpgsql(builder.Configuration.GetConnectionString("PostgresSQL")));
+            builder.Services.AddAutoMapper(typeof(MappingProfile));
 
             var app = builder.Build();
 
