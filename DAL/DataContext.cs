@@ -9,6 +9,8 @@ namespace DAL
     {
         public DbSet<User> Users => Set<User>();
         public DbSet<Follower> Followers => Set<Follower>();
+        public DbSet<Post> Posts => Set<Post>();
+        public DbSet<Comment> Comments => Set<Comment>();
 
         public DataContext(DbContextOptions<DataContext> options) : base(options) { }
 
@@ -53,15 +55,15 @@ namespace DAL
 
         private void ConfigureSoftDeleteFilter(ModelBuilder builder)
         {
-            var softDeletableTypes = builder.Model.FindEntityTypes(typeof(Timestamp));
+            var softDeletableTypes = builder.Model.FindLeastDerivedEntityTypes(typeof(Timestamp));
 
             foreach (var softDeletableType in softDeletableTypes)
             {
-                var parameter = Expression.Parameter(softDeletableType.ClrType);
+                var parameter = Expression.Parameter(softDeletableType.ClrType, "parameter");
                 var deletableProperty = Expression.Property(parameter, nameof(Timestamp.DeletedAt));
-                var nullableProperty = Expression.Constant(null);
+                var expression = Expression.Equal(deletableProperty, Expression.Constant(null));
 
-                var queryFilter = Expression.Lambda(Expression.Equal(deletableProperty, nullableProperty));
+                var queryFilter = Expression.Lambda(expression, parameter);
                 softDeletableType.SetQueryFilter(queryFilter);
             }
         }
@@ -80,7 +82,6 @@ namespace DAL
 
                     case EntityState.Added:
                         entity.Property(nameof(Timestamp.CreatedAt)).CurrentValue = now;
-                        entity.Property(nameof(Timestamp.UpdatedAt)).CurrentValue = now;
                         break;
 
                     case EntityState.Deleted:
