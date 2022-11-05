@@ -8,7 +8,7 @@
         public Guid AuthorId { get; set; }
         public Guid PostId { get; set; }
 
-        public Post Post { get; set; } = null!;
-        public User Author { get; set; } = null!;
+        public virtual Post Post { get; set; } = null!;
+        public virtual User Author { get; set; } = null!;
     }
 }

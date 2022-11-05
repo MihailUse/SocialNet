@@ -13,13 +13,14 @@ namespace DAL.Entities
         public string? FullName { get; set; } = null!;
         public string? About { get; set; }
 
-        public ICollection<Post> Posts { get; set; } = null!;
-        public ICollection<Comment> Comments { get; set; } = null!;
+        public virtual ICollection<Post>? Posts { get; set; } = null!;
+        public virtual ICollection<Comment>? Comments { get; set; } = null!;
+        public virtual ICollection<UserSession>? Sessions { get; set; } = null!;
 
         [InverseProperty("Following")]
-        public ICollection<Follower> Followers { get; set; } = null!;
+        public virtual ICollection<Follower>? Followers { get; set; } = null!;
 
         [InverseProperty("Follewer")]
-        public ICollection<Follower> Followings { get; set; } = null!;
+        public virtual ICollection<Follower>? Followings { get; set; } = null!;
     }
 }

@@ -1,4 +1,5 @@
 using API.Configs;
+using API.Middlewares;
 using API.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -73,6 +74,9 @@ namespace API
             app.UseHttpsRedirection();
             app.UseAuthentication();
             app.UseAuthorization();
+
+            // add middlewares
+            app.UseTokenValidatorMiddleware();
 
             app.MapControllers();
 

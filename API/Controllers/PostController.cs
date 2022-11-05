@@ -1,4 +1,5 @@
-﻿using API.Models.Post;
+﻿using API.Models.Auth;
+using API.Models.Post;
 using API.Services;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
@@ -43,7 +44,7 @@ namespace API.Controllers
         [Authorize]
         public async Task<Guid> CreatePost(CreatePostModel model)
         {
-            Guid.TryParse(User.FindFirst("id")?.Value, out Guid id);
+            Guid.TryParse(User.Claims.FirstOrDefault(x => x.Type == TokenClaimTypes.UserId)?.Value, out Guid id);
             Post post = _mapper.Map<Post>(model);
             post.AuthorId = id;
             return await _postService.CreatePost(post);

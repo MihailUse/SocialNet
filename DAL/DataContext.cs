@@ -11,6 +11,7 @@ namespace DAL
         public DbSet<Follower> Followers => Set<Follower>();
         public DbSet<Post> Posts => Set<Post>();
         public DbSet<Comment> Comments => Set<Comment>();
+        public DbSet<UserSession> UserSessions => Set<UserSession>();
 
         public DataContext(DbContextOptions<DataContext> options) : base(options) { }
 

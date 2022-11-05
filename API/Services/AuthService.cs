@@ -1,6 +1,8 @@
 ﻿using API.Configs;
 using API.Models.Auth;
+using DAL;
 using DAL.Entities;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -12,17 +14,21 @@ namespace API.Services
     {
         private readonly UserService _userService;
         private readonly AuthConfig _authConfig;
+        private readonly DataContext _context;
 
-        public AuthService(UserService userService, IOptions<AuthConfig> authConfig)
+        public AuthService(UserService userService, IOptions<AuthConfig> authConfig, DataContext context)
         {
             _userService = userService;
             _authConfig = authConfig.Value;
+            _context = context;
         }
 
         public async Task<TokenModel> GetToken(string login, string password)
         {
             User user = await _userService.GetUserByCredential(login, password);
-            return GenerateTokens(user);
+            UserSession userSession = await CreateUserSession(user.Id);
+
+            return GenerateTokens(userSession);
         }
 
         public async Task<TokenModel> GetTokensByRefreshToken(string refreshToken)
@@ -36,35 +42,67 @@ namespace API.Services
                 ValidAlgorithms = new string[] { SecurityAlgorithms.HmacSha256 },
             };
 
-            // TODO: create self SecurityToken
             ClaimsPrincipal principal = new JwtSecurityTokenHandler().ValidateToken(refreshToken, parameters, out SecurityToken token);
 
-            if (principal.FindFirst(x => x.Type == "id")?.Value is String stringId && Guid.TryParse(stringId, out Guid id))
+            if (principal.FindFirst(x => x.Type == RefreshTokenClaimTypes.RefreshTokenId)?.Value is String RefreshTokenIdString &&
+                Guid.TryParse(RefreshTokenIdString, out Guid refreshTokenId))
             {
-                User user = await _userService.GetUserById(id);
-                return GenerateTokens(user);
+                UserSession userSession = await GetUserSessionByRefreshTokenId(refreshTokenId);
+
+                if (!userSession.IsActive)
+                    throw new Exception("Session is not active");
+
+                // update RefreshTokenId
+                userSession.RefreshTokenId = Guid.NewGuid();
+                await _context.SaveChangesAsync();
+
+                return GenerateTokens(userSession);
             }
 
             throw new Exception("Invalid token");
         }
 
-        private TokenModel GenerateTokens(User user)
+        public async Task<UserSession> GetUserSessionById(Guid id)
         {
-            Claim[] JwtClaims = new Claim[]
+            return await _context.UserSessions
+                .Include(x => x.User)
+                .SingleAsync(x => x.Id == id);
+        }
+
+        private async Task<UserSession> GetUserSessionByRefreshTokenId(Guid id)
+        {
+            return await _context.UserSessions
+                .Include(x => x.User)
+                .SingleAsync(x => x.RefreshTokenId == id);
+        }
+
+        private async Task<UserSession> CreateUserSession(Guid userId)
+        {
+            UserSession userSession = new UserSession(userId);
+            await _context.UserSessions.AddAsync(userSession);
+            await _context.SaveChangesAsync();
+
+            return userSession;
+        }
+
+        private TokenModel GenerateTokens(UserSession userSession)
+        {
+            Claim[] tokenClaims = new Claim[]
             {
-                new Claim("id", user.Id.ToString()),
-                new Claim("nickname", user.Nickname)
+                new Claim(TokenClaimTypes.SessionId, userSession.Id.ToString()),
+                new Claim(TokenClaimTypes.UserId, userSession.UserId.ToString()),
+                new Claim(TokenClaimTypes.Nickname, userSession.User.Nickname)
             };
 
-            Claim[] refreshClaims = new Claim[]
+            Claim[] refreshTokenClaims = new Claim[]
             {
-                new Claim("id", user.Id.ToString()),
+                new Claim(RefreshTokenClaimTypes.RefreshTokenId, userSession.RefreshTokenId.ToString()),
             };
 
             return new TokenModel()
             {
-                AccessToken = GenerateEncodedToken(JwtClaims, _authConfig.LifeTime),
-                RefreshToken = GenerateEncodedToken(refreshClaims, _authConfig.RefreshLifeTime),
+                AccessToken = GenerateEncodedToken(tokenClaims, _authConfig.LifeTime),
+                RefreshToken = GenerateEncodedToken(refreshTokenClaims, _authConfig.RefreshLifeTime),
             };
         }
 

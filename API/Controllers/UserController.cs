@@ -1,4 +1,5 @@
-﻿using API.Models.User;
+﻿using API.Models.Auth;
+using API.Models.User;
 using API.Services;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
@@ -45,7 +46,7 @@ namespace API.Controllers
         [Authorize]
         public async Task UpdateUser(UpdateUserModel model)
         {
-            Guid.TryParse(User.FindFirst("id")?.Value, out Guid id);
+            Guid.TryParse(User.FindFirst(TokenClaimTypes.UserId)?.Value, out Guid id);
             User user = _mapper.Map<User>(model);
             await _userService.UpdateUser(id, user);
         }
@@ -54,17 +55,17 @@ namespace API.Controllers
         [Authorize]
         public async Task DeleteUser()
         {
-            Guid.TryParse(User.FindFirst("id")?.Value, out Guid id);
+            Guid.TryParse(User.FindFirst(TokenClaimTypes.UserId)?.Value, out Guid id);
             await _userService.DeleteUser(id);
         }
 
-        [HttpGet]
+        [HttpPost]
         public async Task<bool> CheckEmailExists(string email)
         {
             return await _userService.IsEmailExists(email);
         }
 
-        [HttpGet]
+        [HttpPost]
         public async Task<bool> CheckNicknameExists(string nickname)
         {
             return await _userService.IsNicknameExists(nickname);
@@ -74,7 +75,7 @@ namespace API.Controllers
         [Authorize]
         public async Task ChangeFollowStatus(Guid followingId)
         {
-            Guid.TryParse(User.FindFirst("id")?.Value, out Guid followerId);
+            Guid.TryParse(User.FindFirst(TokenClaimTypes.UserId)?.Value, out Guid followerId);
             await _userService.ChangeFollowStatus(followerId, followingId);
         }
     }
