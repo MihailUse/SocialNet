@@ -1,29 +1,81 @@
-﻿using API.Models;
+﻿using API.Models.User;
 using API.Services;
+using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using DAL.Entities;
-using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/[controller]/[action]")]
     [ApiController]
     public class UserController : ControllerBase
     {
+        private readonly IMapper _mapper;
         private readonly UserService _userService;
 
-        public UserController(UserService userService)
+        public UserController(IMapper mapper, UserService userService)
         {
+            _mapper = mapper;
             _userService = userService;
         }
 
-        [HttpPost]
-        public async Task CreateUser(CreateUserModel model) => await _userService.CreateUser(model);
-
-        [HttpPatch]
-        public async Task UpdateUser(UpdateUserModel model) => await _userService.UpdateUser(model);
+        [HttpGet]
+        public IEnumerable<UserModel> GetUsers()
+        {
+            return _userService.GetUsers().ProjectTo<UserModel>(_mapper.ConfigurationProvider).AsEnumerable();
+        }
 
         [HttpGet]
-        public async Task<UserModel> GetUser(Guid id) => await _userService.GetUser(id);
+        public async Task<UserModel> GetUserById(Guid id)
+        {
+            User user = await _userService.GetUserById(id);
+            return _mapper.Map<UserModel>(user);
+        }
+
+        [HttpPost]
+        public async Task<Guid> CreateUser(CreateUserModel model)
+        {
+            User user = _mapper.Map<User>(model);
+            return await _userService.CreateUser(user);
+        }
+
+        [HttpPatch]
+        [Authorize]
+        public async Task UpdateUser(UpdateUserModel model)
+        {
+            Guid.TryParse(User.FindFirst("id")?.Value, out Guid id);
+            User user = _mapper.Map<User>(model);
+            await _userService.UpdateUser(id, user);
+        }
+
+        [HttpDelete]
+        [Authorize]
+        public async Task DeleteUser()
+        {
+            Guid.TryParse(User.FindFirst("id")?.Value, out Guid id);
+            await _userService.DeleteUser(id);
+        }
+
+        [HttpGet]
+        public async Task<bool> CheckEmailExists(string email)
+        {
+            return await _userService.IsEmailExists(email);
+        }
+
+        [HttpGet]
+        public async Task<bool> CheckNicknameExists(string nickname)
+        {
+            return await _userService.IsNicknameExists(nickname);
+        }
+
+        [HttpPost]
+        [Authorize]
+        public async Task ChangeFollowStatus(Guid followingId)
+        {
+            Guid.TryParse(User.FindFirst("id")?.Value, out Guid followerId);
+            await _userService.ChangeFollowStatus(followerId, followingId);
+        }
     }
 }
