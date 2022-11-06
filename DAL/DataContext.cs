@@ -12,6 +12,9 @@ namespace DAL
         public DbSet<Post> Posts => Set<Post>();
         public DbSet<Comment> Comments => Set<Comment>();
         public DbSet<UserSession> UserSessions => Set<UserSession>();
+        public DbSet<Attach> Attaches => Set<Attach>();
+        public DbSet<Avatar> Avatars => Set<Avatar>();
+        public DbSet<PostFile> PostFiles => Set<PostFile>();
 
         public DataContext(DbContextOptions<DataContext> options) : base(options) { }
 
@@ -52,6 +55,9 @@ namespace DAL
 
             modelBuilder.Entity<Follower>()
                 .HasKey(x => new { x.FollewerId, x.FollowingId });
+
+            modelBuilder.Entity<Avatar>().ToTable(nameof(Avatars));
+            modelBuilder.Entity<PostFile>().ToTable(nameof(PostFiles));
         }
 
         private void ConfigureSoftDeleteFilter(ModelBuilder builder)

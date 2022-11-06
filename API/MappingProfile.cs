@@ -1,3 +1,4 @@
+using API.Models.Attach;
 using API.Models.Post;
 using API.Models.User;
 using AutoMapper;
@@ -18,7 +19,9 @@ namespace API
 
             // Post
             CreateMap<CreatePostModel, Post>();
+            CreateMap<MetadataModel, PostFile>();
             CreateMap<Post, PostModel>();
+            CreateMap<PostFile, MetadataModel>();
         }
     }
 }

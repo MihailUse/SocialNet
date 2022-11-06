@@ -13,6 +13,8 @@ namespace DAL.Entities
         public string? FullName { get; set; } = null!;
         public string? About { get; set; }
 
+        public virtual Avatar? Avatar { get; set; }
+
         public virtual ICollection<Post>? Posts { get; set; } = null!;
         public virtual ICollection<Comment>? Comments { get; set; } = null!;
         public virtual ICollection<UserSession>? Sessions { get; set; } = null!;

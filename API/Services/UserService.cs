@@ -1,3 +1,4 @@
+using API.Models.Attach;
 using Common;
 using DAL;
 using DAL.Entities;
@@ -8,10 +9,12 @@ namespace API.Services
     public class UserService
     {
         private readonly DataContext _dataContext;
+        private readonly AttachService _attachService;
 
-        public UserService(DataContext context)
+        public UserService(DataContext context, AttachService attachService)
         {
             _dataContext = context;
+            _attachService = attachService;
         }
 
         public async Task<Guid> CreateUser(User user)
@@ -25,6 +28,7 @@ namespace API.Services
         {
             User user = await GetUserById(id);
 
+            // TODO: refactor this
             user.Nickname = userOptions.Nickname ?? user.Nickname;
             user.FullName = userOptions.FullName ?? user.FullName;
             user.About = userOptions.About ?? user.About;
@@ -65,11 +69,6 @@ namespace API.Services
             return user;
         }
 
-        public async Task<bool> IsEmailExists(string email)
-        {
-            return await _dataContext.Users.AnyAsync(x => x.Email.ToLower() == email.ToLower());
-        }
-
         public async Task<bool> IsNicknameExists(string nickname)
         {
             return await _dataContext.Users.AnyAsync(x => x.Nickname == nickname);
@@ -87,6 +86,23 @@ namespace API.Services
             else
                 _dataContext.Followers.Remove(followerExists);
 
+            await _dataContext.SaveChangesAsync();
+        }
+
+        public async Task SetUserAvatar(Guid userId, MetadataModel meta)
+        {
+            User user = await _dataContext.Users.Include(x => x.Avatar).SingleAsync(x => x.Id == userId);
+            Avatar avatar = new Avatar
+            {
+                Author = user,
+                MimeType = meta.MimeType,
+                Name = meta.Name,
+                Size = meta.Size
+            };
+
+            _attachService.SaveAttach(meta.Id);
+
+            user.Avatar = avatar;
             await _dataContext.SaveChangesAsync();
         }
     }

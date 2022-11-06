@@ -25,19 +25,24 @@ namespace API.Controllers
         [HttpGet]
         public IEnumerable<PostModel> GetPosts()
         {
-            return _postService.GetPosts().ProjectTo<PostModel>(_mapper.ConfigurationProvider).AsEnumerable();
+            return _postService.GetPosts()
+                .ProjectTo<PostModel>(_mapper.ConfigurationProvider)
+                .AsEnumerable();
         }
 
         [HttpGet]
         public IEnumerable<PostModel> GetPostsByAuthor(Guid userId)
         {
-            return _postService.GetPostsByAuthor(userId).ProjectTo<PostModel>(_mapper.ConfigurationProvider).AsEnumerable();
+            return _postService.GetPostsByAuthor(userId)
+                .ProjectTo<PostModel>(_mapper.ConfigurationProvider)
+                .AsEnumerable();
         }
 
         [HttpGet]
-        public async Task<Post> GetPostById(Guid id)
+        public async Task<PostModel> GetPostById(Guid id)
         {
-            return await _postService.GetPostById(id);
+            Post post = await _postService.GetPostById(id);
+            return _mapper.Map<PostModel>(post);
         }
 
         [HttpPost]
@@ -46,8 +51,8 @@ namespace API.Controllers
         {
             Guid.TryParse(User.Claims.FirstOrDefault(x => x.Type == TokenClaimTypes.UserId)?.Value, out Guid id);
             Post post = _mapper.Map<Post>(model);
-            post.AuthorId = id;
-            return await _postService.CreatePost(post);
+
+            return await _postService.CreatePost(id, post);
         }
     }
 }

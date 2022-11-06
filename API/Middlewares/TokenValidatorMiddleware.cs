@@ -6,6 +6,7 @@ using System.Net;
 namespace API.Middlewares
 {
     // You may need to install the Microsoft.AspNetCore.Http.Abstractions package into your project
+    // TODO: try IMiddleware
     public class TokenValidatorMiddleware
     {
         private readonly RequestDelegate _next;
@@ -20,6 +21,7 @@ namespace API.Middlewares
             string? sessionIdString = httpContext.User.FindFirst(x => x.Type == TokenClaimTypes.SessionId)?.Value;
             string? RefreshTokenIdString = httpContext.User.FindFirst(x => x.Type == RefreshTokenClaimTypes.RefreshTokenId)?.Value;
 
+            // check it's not a refresh token
             if (RefreshTokenIdString != null)
             {
                 httpContext.Response.Clear();

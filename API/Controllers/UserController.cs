@@ -1,4 +1,5 @@
-﻿using API.Models.Auth;
+﻿using API.Models.Attach;
+using API.Models.Auth;
 using API.Models.User;
 using API.Services;
 using AutoMapper;
@@ -51,18 +52,20 @@ namespace API.Controllers
             await _userService.UpdateUser(id, user);
         }
 
+        [HttpPost]
+        [Authorize]
+        public async Task SetUserAvatar(MetadataModel metadata)
+        {
+            Guid.TryParse(User.FindFirst(TokenClaimTypes.UserId)?.Value, out Guid id);
+            await _userService.SetUserAvatar(id, metadata);
+        }
+
         [HttpDelete]
         [Authorize]
         public async Task DeleteUser()
         {
             Guid.TryParse(User.FindFirst(TokenClaimTypes.UserId)?.Value, out Guid id);
             await _userService.DeleteUser(id);
-        }
-
-        [HttpPost]
-        public async Task<bool> CheckEmailExists(string email)
-        {
-            return await _userService.IsEmailExists(email);
         }
 
         [HttpPost]

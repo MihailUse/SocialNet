@@ -12,15 +12,15 @@ namespace API.Services
 {
     public class AuthService
     {
+        private readonly DataContext _context;
         private readonly UserService _userService;
         private readonly AuthConfig _authConfig;
-        private readonly DataContext _context;
 
-        public AuthService(UserService userService, IOptions<AuthConfig> authConfig, DataContext context)
+        public AuthService(DataContext context, UserService userService, IOptions<AuthConfig> authConfig)
         {
+            _context = context;
             _userService = userService;
             _authConfig = authConfig.Value;
-            _context = context;
         }
 
         public async Task<TokenModel> GetToken(string login, string password)

@@ -27,10 +27,13 @@ namespace API
             builder.Services.Configure<AuthConfig>(authSection);
             builder.Services.AddDbContext<DAL.DataContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("PostgreSQL")));
             builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
             builder.Services.AddScoped<UserService>();
             builder.Services.AddScoped<AuthService>();
             builder.Services.AddScoped<PostService>();
+            builder.Services.AddSingleton<AttachService>();
 
+            // TODO: move definition to another place
             builder.Services.AddAuthentication(defaultScheme: JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(o =>
                 {
@@ -48,6 +51,7 @@ namespace API
                     };
                 });
 
+            // TODO: move definition to another place
             builder.Services.AddAuthorization(o =>
             {
                 o.AddPolicy("ValidAccessToken", p =>
