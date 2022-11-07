@@ -31,6 +31,9 @@ namespace API.Services
             string filePath = Path.Combine(_attachPath, fileName.ToString());
             string tempFilePath = Path.Combine(_tempPath, fileName.ToString());
 
+            if (!File.Exists(tempFilePath))
+                throw new Exception("Temp file not found");
+
             File.Copy(tempFilePath, filePath, true);
         }
 
@@ -38,6 +41,12 @@ namespace API.Services
         {
             string filePath = Path.Combine(_attachPath, id.ToString());
             return new FileStream(filePath, FileMode.Open);
+        }
+
+        public bool IsAttachExists(Guid id)
+        {
+            string filePath = Path.Combine(_attachPath, id.ToString());
+            return File.Exists(filePath);
         }
     }
 }

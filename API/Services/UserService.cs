@@ -17,8 +17,62 @@ namespace API.Services
             _attachService = attachService;
         }
 
+        public IQueryable<User> GetUsers()
+        {
+            return _dataContext.Users
+                .Include(x => x.Avatar)
+                .AsNoTracking();
+        }
+
+        public async Task<User> GetUserById(Guid id)
+        {
+            User? user = await _dataContext.Users
+                .Include(x => x.Avatar)
+                .FirstOrDefaultAsync(x => x.Id == id);
+
+            if (user == null)
+                throw new Exception("User not found");
+
+            return user;
+        }
+
+        private async Task<User> GetUserByEmail(string email)
+        {
+            User? user = await _dataContext.Users
+                .Include(x => x.Avatar)
+                .SingleAsync(x => x.Email.ToLower() == email.ToLower());
+
+            if (user == null)
+                throw new Exception("User not found");
+
+            return user;
+        }
+
+        public async Task<Avatar> GetUserAvatar(Guid id)
+        {
+            Avatar? avatar = await _dataContext.Avatars.FirstOrDefaultAsync(x => x.UserId == id);
+
+            if (avatar == null)
+                throw new Exception("Avatar not found");
+
+            return avatar;
+        }
+
+        public IQueryable<Attach> GetUserAttaches(Guid id)
+        {
+            return _dataContext.Attaches
+                .Where(x => x.AuthorId == id)
+                .AsNoTracking();
+        }
+
         public async Task<Guid> CreateUser(User user)
         {
+            if (await IsEmailExists(user.Email))
+                throw new Exception("Email already exists");
+
+            if (await IsNicknameExists(user.Nickname))
+                throw new Exception("Nickname already exists");
+
             await _dataContext.Users.AddAsync(user);
             await _dataContext.SaveChangesAsync();
             return user.Id;
@@ -35,21 +89,6 @@ namespace API.Services
 
             await _dataContext.SaveChangesAsync();
             return user;
-        }
-
-        public IQueryable<User> GetUsers()
-        {
-            return _dataContext.Users.AsNoTracking();
-        }
-
-        public async Task<User> GetUserById(Guid id)
-        {
-            return await _dataContext.Users.SingleAsync(x => x.Id == id);
-        }
-
-        private async Task<User> GetUserByEmail(string email)
-        {
-            return await _dataContext.Users.SingleAsync(x => x.Email.ToLower() == email.ToLower());
         }
 
         public async Task DeleteUser(Guid id)
@@ -74,6 +113,11 @@ namespace API.Services
             return await _dataContext.Users.AnyAsync(x => x.Nickname == nickname);
         }
 
+        public async Task<bool> IsEmailExists(string email)
+        {
+            return await _dataContext.Users.AnyAsync(x => x.Email.ToLower() == email.ToLower());
+        }
+
         public async Task ChangeFollowStatus(Guid followerId, Guid followingId)
         {
             User following = await GetUserById(followingId);
@@ -91,18 +135,17 @@ namespace API.Services
 
         public async Task SetUserAvatar(Guid userId, MetadataModel meta)
         {
-            User user = await _dataContext.Users.Include(x => x.Avatar).SingleAsync(x => x.Id == userId);
-            Avatar avatar = new Avatar
+            User user = await GetUserById(userId);
+            user.Avatar = new Avatar
             {
-                Author = user,
+                Id = meta.Id,
+                AuthorId = userId,
                 MimeType = meta.MimeType,
                 Name = meta.Name,
                 Size = meta.Size
             };
 
             _attachService.SaveAttach(meta.Id);
-
-            user.Avatar = avatar;
             await _dataContext.SaveChangesAsync();
         }
     }

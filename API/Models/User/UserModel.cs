@@ -1,4 +1,5 @@
-﻿using DAL.Entities;
+﻿using API.Models.Attach;
+using DAL.Entities;
 
 namespace API.Models.User
 {
@@ -9,5 +10,7 @@ namespace API.Models.User
         public string Nickname { get; set; } = null!;
         public string? FullName { get; set; } = null!;
         public string? About { get; set; }
+
+        public MetadataModel? Avatar { get; set; }
     }
 }

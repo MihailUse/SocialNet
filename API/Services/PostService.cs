@@ -40,17 +40,17 @@ namespace API.Services
 
         public async Task<Guid> CreatePost(Guid userId, Post post)
         {
+            post.AuthorId = userId;
+
             if (post.Files != null)
             {
                 List<PostFile> files = post.Files.ToList();
 
                 for (int i = 0; i < files.Count; i++)
                 {
-                    files[i].AuthorId = userId;
                     _attachService.SaveAttach(files[i].Id);
+                    files[i].AuthorId = userId;
                 }
-
-                post.AuthorId = userId;
             }
 
             await _dataContext.AddAsync(post);

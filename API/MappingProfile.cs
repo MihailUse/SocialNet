@@ -16,6 +16,7 @@ namespace API
                 .ForMember(d => d.PasswordHash, m => m.MapFrom(s => HashHelper.GetHash(s.Password)));
             CreateMap<UpdateUserModel, User>();
             CreateMap<User, UserModel>();
+            CreateMap<Avatar, MetadataModel>();
 
             // Post
             CreateMap<CreatePostModel, Post>();

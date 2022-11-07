@@ -64,16 +64,26 @@ namespace API.Services
 
         public async Task<UserSession> GetUserSessionById(Guid id)
         {
-            return await _context.UserSessions
+            UserSession? userSession = await _context.UserSessions
                 .Include(x => x.User)
-                .SingleAsync(x => x.Id == id);
+                .FirstOrDefaultAsync(x => x.Id == id);
+
+            if (userSession == null)
+                throw new Exception("Session not found");
+
+            return userSession;
         }
 
         private async Task<UserSession> GetUserSessionByRefreshTokenId(Guid id)
         {
-            return await _context.UserSessions
+            UserSession? userSession = await _context.UserSessions
                 .Include(x => x.User)
-                .SingleAsync(x => x.RefreshTokenId == id);
+                .FirstOrDefaultAsync(x => x.RefreshTokenId == id);
+
+            if (userSession == null)
+                throw new Exception("Session not found");
+
+            return userSession;
         }
 
         private async Task<UserSession> CreateUserSession(Guid userId)

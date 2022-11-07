@@ -1,6 +1,7 @@
 ﻿using API.Models.Attach;
 using API.Services;
 using Microsoft.AspNetCore.Mvc;
+using System.Net.Mime;
 
 namespace API.Controllers
 {
@@ -32,11 +33,17 @@ namespace API.Controllers
             return await _attachService.SaveTempFile(file);
         }
 
-        // TODO: test this
         [HttpPost]
-        public FileResult GetFile(MetadataModel metadata) {
+        public FileStreamResult GetFile(MetadataModel metadata)
+        {
             FileStream fs = _attachService.GetStream(metadata.Id);
-            
+            return File(fs, metadata.MimeType);
+        }
+
+        [HttpPost]
+        public FileResult DownloadFile(MetadataModel metadata)
+        {
+            FileStream fs = _attachService.GetStream(metadata.Id);
             return File(fs, metadata.MimeType, metadata.Name);
         }
     }
