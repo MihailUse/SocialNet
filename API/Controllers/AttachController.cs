@@ -31,5 +31,13 @@ namespace API.Controllers
         {
             return await _attachService.SaveTempFile(file);
         }
+
+        // TODO: test this
+        [HttpPost]
+        public FileResult GetFile(MetadataModel metadata) {
+            FileStream fs = _attachService.GetStream(metadata.Id);
+            
+            return File(fs, metadata.MimeType, metadata.Name);
+        }
     }
 }

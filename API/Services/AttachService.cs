@@ -33,5 +33,11 @@ namespace API.Services
 
             File.Copy(tempFilePath, filePath, true);
         }
+
+        public FileStream GetStream(Guid id)
+        {
+            string filePath = Path.Combine(_attachPath, id.ToString());
+            return new FileStream(filePath, FileMode.Open);
+        }
     }
 }
