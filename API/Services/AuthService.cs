@@ -1,5 +1,7 @@
 ﻿using API.Configs;
+using API.Constants;
 using API.Models.Auth;
+using Common.Extentions;
 using DAL;
 using DAL.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -44,7 +46,7 @@ namespace API.Services
 
             ClaimsPrincipal principal = new JwtSecurityTokenHandler().ValidateToken(refreshToken, parameters, out SecurityToken token);
 
-            if (principal.FindFirst(x => x.Type == RefreshTokenClaimTypes.RefreshTokenId)?.Value is String RefreshTokenIdString &&
+            if (principal.GetClaimValue<string>(TokenClaimTypes.RefreshTokenId) is String RefreshTokenIdString &&
                 Guid.TryParse(RefreshTokenIdString, out Guid refreshTokenId))
             {
                 UserSession userSession = await GetUserSessionByRefreshTokenId(refreshTokenId);
@@ -62,11 +64,11 @@ namespace API.Services
             throw new Exception("Invalid token");
         }
 
-        public async Task<UserSession> GetUserSessionById(Guid id)
+        public async Task<UserSession> GetUserSessionById(Guid userId)
         {
             UserSession? userSession = await _context.UserSessions
                 .Include(x => x.User)
-                .FirstOrDefaultAsync(x => x.Id == id);
+                .FirstOrDefaultAsync(x => x.Id == userId);
 
             if (userSession == null)
                 throw new Exception("Session not found");
@@ -74,11 +76,11 @@ namespace API.Services
             return userSession;
         }
 
-        private async Task<UserSession> GetUserSessionByRefreshTokenId(Guid id)
+        private async Task<UserSession> GetUserSessionByRefreshTokenId(Guid refreshTokenId)
         {
             UserSession? userSession = await _context.UserSessions
                 .Include(x => x.User)
-                .FirstOrDefaultAsync(x => x.RefreshTokenId == id);
+                .FirstOrDefaultAsync(x => x.RefreshTokenId == refreshTokenId);
 
             if (userSession == null)
                 throw new Exception("Session not found");
@@ -106,7 +108,7 @@ namespace API.Services
 
             Claim[] refreshTokenClaims = new Claim[]
             {
-                new Claim(RefreshTokenClaimTypes.RefreshTokenId, userSession.RefreshTokenId.ToString()),
+                new Claim(TokenClaimTypes.RefreshTokenId, userSession.RefreshTokenId.ToString()),
             };
 
             return new TokenModel()

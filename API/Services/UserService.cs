@@ -1,4 +1,3 @@
-using API.Models.Attach;
 using Common;
 using DAL;
 using DAL.Entities;
@@ -24,11 +23,11 @@ namespace API.Services
                 .AsNoTracking();
         }
 
-        public async Task<User> GetUserById(Guid id)
+        public async Task<User> GetUserById(Guid userId)
         {
             User? user = await _dataContext.Users
                 .Include(x => x.Avatar)
-                .FirstOrDefaultAsync(x => x.Id == id);
+                .FirstOrDefaultAsync(x => x.Id == userId);
 
             if (user == null)
                 throw new Exception("User not found");
@@ -48,9 +47,9 @@ namespace API.Services
             return user;
         }
 
-        public async Task<Avatar> GetUserAvatar(Guid id)
+        public async Task<Avatar> GetUserAvatar(Guid userId)
         {
-            Avatar? avatar = await _dataContext.Avatars.FirstOrDefaultAsync(x => x.UserId == id);
+            Avatar? avatar = await _dataContext.Avatars.FirstOrDefaultAsync(x => x.UserId == userId);
 
             if (avatar == null)
                 throw new Exception("Avatar not found");
@@ -58,10 +57,10 @@ namespace API.Services
             return avatar;
         }
 
-        public IQueryable<Attach> GetUserAttaches(Guid id)
+        public IQueryable<Attach> GetUserAttaches(Guid userId)
         {
             return _dataContext.Attaches
-                .Where(x => x.AuthorId == id)
+                .Where(x => x.AuthorId == userId)
                 .AsNoTracking();
         }
 
@@ -78,9 +77,9 @@ namespace API.Services
             return user.Id;
         }
 
-        public async Task<User> UpdateUser(Guid id, User userOptions)
+        public async Task<User> UpdateUser(Guid userId, User userOptions)
         {
-            User user = await GetUserById(id);
+            User user = await GetUserById(userId);
 
             user.Nickname = userOptions.Nickname ?? user.Nickname;
             user.FullName = userOptions.FullName ?? user.FullName;
@@ -90,9 +89,9 @@ namespace API.Services
             return user;
         }
 
-        public async Task DeleteUser(Guid id)
+        public async Task DeleteUser(Guid userId)
         {
-            User user = await GetUserById(id);
+            User user = await GetUserById(userId);
             _dataContext.Users.Remove(user);
             await _dataContext.SaveChangesAsync();
         }
@@ -132,19 +131,13 @@ namespace API.Services
             await _dataContext.SaveChangesAsync();
         }
 
-        public async Task SetUserAvatar(Guid userId, MetadataModel meta)
+        public async Task SetUserAvatar(Guid userId, Avatar avatar)
         {
             User user = await GetUserById(userId);
-            user.Avatar = new Avatar
-            {
-                Id = meta.Id,
-                AuthorId = userId,
-                MimeType = meta.MimeType,
-                Name = meta.Name,
-                Size = meta.Size
-            };
+            avatar.AuthorId = userId;
+            user.Avatar = avatar;
 
-            _attachService.SaveAttach(meta.Id);
+            _attachService.SaveAttach(avatar.Id);
             await _dataContext.SaveChangesAsync();
         }
     }

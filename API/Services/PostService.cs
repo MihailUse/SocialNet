@@ -15,11 +15,13 @@ namespace API.Services
             _attachService = attachService;
         }
 
-        public IQueryable<Post> GetPosts()
+        public IQueryable<Post> GetPosts(int skip, int take)
         {
             return _dataContext.Posts
                 .Include(x => x.Files)
-                .OrderBy(x => x.CreatedAt)
+                .OrderByDescending(x => x.CreatedAt)
+                .Take(take)
+                .Skip(skip)
                 .AsNoTracking();
         }
 
@@ -28,19 +30,12 @@ namespace API.Services
             return _dataContext.Posts
                 .Include(x => x.Files)
                 .Where(x => x.Author.Id == userId)
+                .OrderByDescending(x => x.CreatedAt)
                 .AsNoTracking();
         }
 
-        public async Task<Post> GetPostById(Guid id)
+        public async Task<Guid> CreatePost(Post post)
         {
-            return await _dataContext.Posts
-                .Include(x => x.Files)
-                .SingleAsync(post => post.Id == id);
-        }
-
-        public async Task<Guid> CreatePost(Guid userId, Post post)
-        {
-            post.AuthorId = userId;
 
             if (post.Files != null)
             {
@@ -48,14 +43,35 @@ namespace API.Services
 
                 for (int i = 0; i < files.Count; i++)
                 {
+                    files[i].AuthorId = post.AuthorId;
                     _attachService.SaveAttach(files[i].Id);
-                    files[i].AuthorId = userId;
                 }
             }
 
             await _dataContext.AddAsync(post);
             await _dataContext.SaveChangesAsync();
             return post.Id;
+        }
+
+        public async Task<Post> GetPostById(Guid postId)
+        {
+            Post? post = await _dataContext.Posts.FirstOrDefaultAsync(post => post.Id == postId);
+
+            if (post == null)
+                throw new Exception("Post not found");
+
+            return post;
+        }
+
+        public async Task DeletePost(Guid userId, Guid postId)
+        {
+            Post post = await GetPostById(postId);
+
+            if (post.AuthorId != userId)
+                throw new Exception("User no permission");
+
+            _dataContext.Posts.Remove(post);
+            await _dataContext.SaveChangesAsync();
         }
     }
 }

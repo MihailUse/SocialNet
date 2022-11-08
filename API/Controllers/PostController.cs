@@ -1,8 +1,9 @@
-﻿using API.Models.Auth;
+﻿using API.Constants;
 using API.Models.Post;
 using API.Services;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
+using Common.Extentions;
 using DAL.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -24,9 +25,9 @@ namespace API.Controllers
         }
 
         [HttpGet]
-        public IEnumerable<PostModel> GetPosts()
+        public IEnumerable<PostModel> GetPosts(int skip = 0, int take = 20)
         {
-            return _postService.GetPosts()
+            return _postService.GetPosts(skip, take)
                 .ProjectTo<PostModel>(_mapper.ConfigurationProvider)
                 .AsEnumerable();
         }
@@ -39,20 +40,20 @@ namespace API.Controllers
                 .AsEnumerable();
         }
 
-        [HttpGet]
-        public async Task<PostModel> GetPostById(Guid id)
-        {
-            Post post = await _postService.GetPostById(id);
-            return _mapper.Map<PostModel>(post);
-        }
-
         [HttpPost]
         public async Task<Guid> CreatePost(CreatePostModel model)
         {
-            Guid.TryParse(User.Claims.FirstOrDefault(x => x.Type == TokenClaimTypes.UserId)?.Value, out Guid id);
             Post post = _mapper.Map<Post>(model);
+            post.AuthorId = User.GetClaimValue<Guid>(TokenClaimTypes.UserId);
 
-            return await _postService.CreatePost(id, post);
+            return await _postService.CreatePost(post);
+        }
+
+        [HttpDelete]
+        public async Task DeletePost(Guid postId)
+        {
+            Guid userId = User.GetClaimValue<Guid>(TokenClaimTypes.UserId);
+            await _postService.DeletePost(userId, postId);
         }
     }
 }

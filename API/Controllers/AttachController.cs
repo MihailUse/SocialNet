@@ -7,7 +7,6 @@ namespace API.Controllers
 {
     [Route("api/[controller]/[action]")]
     [ApiController]
-    [Authorize]
     public class AttachController : ControllerBase
     {
         private readonly AttachService _attachService;
@@ -18,6 +17,7 @@ namespace API.Controllers
         }
 
         [HttpPost]
+        [Authorize]
         public async Task<List<MetadataModel>> UploadMultipleFiles(IEnumerable<IFormFile> files)
         {
             List<MetadataModel> metadatas = new List<MetadataModel>();
@@ -29,6 +29,7 @@ namespace API.Controllers
         }
 
         [HttpPost]
+        [Authorize]
         public async Task<MetadataModel> UploadFile(IFormFile file)
         {
             return await _attachService.SaveTempFile(file);

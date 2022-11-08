@@ -35,18 +35,13 @@ namespace API.Services
                 throw new Exception("Temp file not found");
 
             File.Copy(tempFilePath, filePath, true);
+            File.Delete(tempFilePath);
         }
 
-        public FileStream GetStream(Guid id)
+        public FileStream GetStream(Guid fileId)
         {
-            string filePath = Path.Combine(_attachPath, id.ToString());
+            string filePath = Path.Combine(_attachPath, fileId.ToString());
             return new FileStream(filePath, FileMode.Open);
-        }
-
-        public bool IsAttachExists(Guid id)
-        {
-            string filePath = Path.Combine(_attachPath, id.ToString());
-            return File.Exists(filePath);
         }
     }
 }

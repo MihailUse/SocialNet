@@ -1,4 +1,5 @@
 using API.Models.Attach;
+using API.Models.Comment;
 using API.Models.Post;
 using API.Models.User;
 using AutoMapper;
@@ -17,6 +18,7 @@ namespace API
             CreateMap<UpdateUserModel, User>();
             CreateMap<User, UserModel>();
             CreateMap<Avatar, MetadataModel>();
+            CreateMap<MetadataModel, Avatar>();
 
             // Post
             CreateMap<CreatePostModel, Post>();
@@ -24,7 +26,11 @@ namespace API
             CreateMap<MetadataModel, PostFile>();
             CreateMap<PostFile, MetadataModel>();
 
-            //Attach
+            // Comment
+            CreateMap<CreateCommentModel, Comment>();
+            CreateMap<Comment, CommentModel>();
+
+            // Attach
             CreateMap<Attach, MetadataModel>();
         }
     }

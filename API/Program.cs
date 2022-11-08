@@ -31,6 +31,7 @@ namespace API
             builder.Services.AddScoped<UserService>();
             builder.Services.AddScoped<AuthService>();
             builder.Services.AddScoped<PostService>();
+            builder.Services.AddScoped<CommentService>();
             builder.Services.AddSingleton<AttachService>();
 
             builder.Services.AddAuthentication(defaultScheme: JwtBearerDefaults.AuthenticationScheme)

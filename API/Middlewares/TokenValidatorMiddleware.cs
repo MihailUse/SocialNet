@@ -1,4 +1,4 @@
-﻿using API.Models.Auth;
+﻿using API.Constants;
 using API.Services;
 using DAL.Entities;
 using System.Net;
@@ -19,7 +19,7 @@ namespace API.Middlewares
         public async Task Invoke(HttpContext httpContext, AuthService authService)
         {
             string? sessionIdString = httpContext.User.FindFirst(x => x.Type == TokenClaimTypes.SessionId)?.Value;
-            string? RefreshTokenIdString = httpContext.User.FindFirst(x => x.Type == RefreshTokenClaimTypes.RefreshTokenId)?.Value;
+            string? RefreshTokenIdString = httpContext.User.FindFirst(x => x.Type == TokenClaimTypes.RefreshTokenId)?.Value;
 
             // check it's not a refresh token
             if (RefreshTokenIdString != null)

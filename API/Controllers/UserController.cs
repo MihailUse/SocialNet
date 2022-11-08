@@ -1,9 +1,10 @@
-﻿using API.Models.Attach;
-using API.Models.Auth;
+﻿using API.Constants;
+using API.Models.Attach;
 using API.Models.User;
 using API.Services;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
+using Common.Extentions;
 using DAL.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -35,30 +36,35 @@ namespace API.Controllers
         }
 
         [HttpGet]
-        public async Task<UserModel> GetUserById(Guid id)
+        public async Task<UserModel> GetUserById(Guid userId)
         {
-            User user = await _userService.GetUserById(id);
+            User user = await _userService.GetUserById(userId);
             return _mapper.Map<UserModel>(user);
         }
 
         [HttpGet]
-        public async Task<FileResult> GetUserAvatar(Guid id)
+        public async Task<FileResult> GetUserAvatar(Guid userId, bool download = false)
         {
-            Avatar avatar = await _userService.GetUserAvatar(id);
+            Avatar avatar = await _userService.GetUserAvatar(userId);
             FileStream fs = _attachService.GetStream(avatar.Id);
+
+            if (download)
+                return File(fs, avatar.MimeType, avatar.Name);
+
             return File(fs, avatar.MimeType);
         }
 
         [HttpGet]
         public IEnumerable<MetadataModel> GetUserAttaches()
         {
-            Guid.TryParse(User.FindFirst(TokenClaimTypes.UserId)?.Value, out Guid id);
+            Guid id = User.GetClaimValue<Guid>(TokenClaimTypes.UserId);
             return _userService.GetUserAttaches(id)
                 .ProjectTo<MetadataModel>(_mapper.ConfigurationProvider)
                 .AsEnumerable();
         }
 
         [HttpPost]
+        [AllowAnonymous]
         public async Task<Guid> CreateUser(CreateUserModel model)
         {
             User user = _mapper.Map<User>(model);
@@ -68,21 +74,22 @@ namespace API.Controllers
         [HttpPost]
         public async Task SetUserAvatar(MetadataModel metadata)
         {
-            Guid.TryParse(User.FindFirst(TokenClaimTypes.UserId)?.Value, out Guid id);
-            await _userService.SetUserAvatar(id, metadata);
+            Guid id = User.GetClaimValue<Guid>(TokenClaimTypes.UserId);
+            Avatar avatar = _mapper.Map<Avatar>(metadata);
+            await _userService.SetUserAvatar(id, avatar);
         }
 
         [HttpPost]
         public async Task ChangeFollowStatus(Guid followingId)
         {
-            Guid.TryParse(User.FindFirst(TokenClaimTypes.UserId)?.Value, out Guid followerId);
+            Guid followerId = User.GetClaimValue<Guid>(TokenClaimTypes.UserId);
             await _userService.ChangeFollowStatus(followerId, followingId);
         }
 
         [HttpPatch]
         public async Task UpdateUser(UpdateUserModel model)
         {
-            Guid.TryParse(User.FindFirst(TokenClaimTypes.UserId)?.Value, out Guid id);
+            Guid id = User.GetClaimValue<Guid>(TokenClaimTypes.UserId);
             User user = _mapper.Map<User>(model);
             await _userService.UpdateUser(id, user);
         }
@@ -90,7 +97,7 @@ namespace API.Controllers
         [HttpDelete]
         public async Task DeleteUser()
         {
-            Guid.TryParse(User.FindFirst(TokenClaimTypes.UserId)?.Value, out Guid id);
+            Guid id = User.GetClaimValue<Guid>(TokenClaimTypes.UserId);
             await _userService.DeleteUser(id);
         }
     }
