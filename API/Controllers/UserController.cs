@@ -12,6 +12,7 @@ namespace API.Controllers
 {
     [Route("api/[controller]/[action]")]
     [ApiController]
+    [Authorize]
     public class UserController : ControllerBase
     {
         private readonly IMapper _mapper;
@@ -49,11 +50,12 @@ namespace API.Controllers
         }
 
         [HttpGet]
-        [Authorize]
-        public IQueryable<Attach> GetUserAttaches()
+        public IEnumerable<MetadataModel> GetUserAttaches()
         {
             Guid.TryParse(User.FindFirst(TokenClaimTypes.UserId)?.Value, out Guid id);
-            return _userService.GetUserAttaches(id);
+            return _userService.GetUserAttaches(id)
+                .ProjectTo<MetadataModel>(_mapper.ConfigurationProvider)
+                .AsEnumerable();
         }
 
         [HttpPost]
@@ -64,7 +66,6 @@ namespace API.Controllers
         }
 
         [HttpPost]
-        [Authorize]
         public async Task SetUserAvatar(MetadataModel metadata)
         {
             Guid.TryParse(User.FindFirst(TokenClaimTypes.UserId)?.Value, out Guid id);
@@ -72,7 +73,6 @@ namespace API.Controllers
         }
 
         [HttpPost]
-        [Authorize]
         public async Task ChangeFollowStatus(Guid followingId)
         {
             Guid.TryParse(User.FindFirst(TokenClaimTypes.UserId)?.Value, out Guid followerId);
@@ -80,7 +80,6 @@ namespace API.Controllers
         }
 
         [HttpPatch]
-        [Authorize]
         public async Task UpdateUser(UpdateUserModel model)
         {
             Guid.TryParse(User.FindFirst(TokenClaimTypes.UserId)?.Value, out Guid id);
@@ -89,7 +88,6 @@ namespace API.Controllers
         }
 
         [HttpDelete]
-        [Authorize]
         public async Task DeleteUser()
         {
             Guid.TryParse(User.FindFirst(TokenClaimTypes.UserId)?.Value, out Guid id);

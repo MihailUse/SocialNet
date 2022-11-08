@@ -20,9 +20,12 @@ namespace API
 
             // Post
             CreateMap<CreatePostModel, Post>();
-            CreateMap<MetadataModel, PostFile>();
             CreateMap<Post, PostModel>();
+            CreateMap<MetadataModel, PostFile>();
             CreateMap<PostFile, MetadataModel>();
+
+            //Attach
+            CreateMap<Attach, MetadataModel>();
         }
     }
 }

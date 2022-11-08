@@ -11,6 +11,7 @@ namespace API.Controllers
 {
     [Route("api/[controller]/[action]")]
     [ApiController]
+    [Authorize]
     public class PostController : ControllerBase
     {
         private readonly IMapper _mapper;
@@ -46,7 +47,6 @@ namespace API.Controllers
         }
 
         [HttpPost]
-        [Authorize]
         public async Task<Guid> CreatePost(CreatePostModel model)
         {
             Guid.TryParse(User.Claims.FirstOrDefault(x => x.Type == TokenClaimTypes.UserId)?.Value, out Guid id);

@@ -1,12 +1,13 @@
 ﻿using API.Models.Attach;
 using API.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Net.Mime;
 
 namespace API.Controllers
 {
     [Route("api/[controller]/[action]")]
     [ApiController]
+    [Authorize]
     public class AttachController : ControllerBase
     {
         private readonly AttachService _attachService;

@@ -82,7 +82,6 @@ namespace API.Services
         {
             User user = await GetUserById(id);
 
-            // TODO: refactor this
             user.Nickname = userOptions.Nickname ?? user.Nickname;
             user.FullName = userOptions.FullName ?? user.FullName;
             user.About = userOptions.About ?? user.About;
