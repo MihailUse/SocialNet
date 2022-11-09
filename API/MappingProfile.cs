@@ -16,15 +16,16 @@ namespace API
             CreateMap<CreateUserModel, User>()
                 .ForMember(d => d.PasswordHash, m => m.MapFrom(s => HashHelper.GetHash(s.Password)));
             CreateMap<UpdateUserModel, User>();
-            CreateMap<User, UserModel>();
-            CreateMap<Avatar, MetadataModel>();
-            CreateMap<MetadataModel, Avatar>();
+            CreateProjection<User, UserModel>()
+                .ForMember(d => d.FollowerCount, m => m.MapFrom(s => s.Followers.Count()))
+                .ForMember(d => d.PostCount, m => m.MapFrom(s => s.Posts.Count()));
+            CreateMap<User, UserMiniModel>();
+            CreateMap<Avatar, MetadataModel>().ReverseMap();
 
             // Post
             CreateMap<CreatePostModel, Post>();
             CreateMap<Post, PostModel>();
-            CreateMap<MetadataModel, PostFile>();
-            CreateMap<PostFile, MetadataModel>();
+            CreateMap<PostFile, MetadataModel>().ReverseMap();
 
             // Comment
             CreateMap<CreateCommentModel, Comment>();

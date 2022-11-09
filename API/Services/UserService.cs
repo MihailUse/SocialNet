@@ -35,6 +35,12 @@ namespace API.Services
             return user;
         }
 
+        public IQueryable<User> GetUserInfoById(Guid userId)
+        {
+            return _dataContext.Users
+                .Include(x => x.Avatar);
+        }
+
         private async Task<User> GetUserByEmail(string email)
         {
             User? user = await _dataContext.Users

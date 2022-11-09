@@ -28,18 +28,26 @@ namespace API.Controllers
         }
 
         [HttpGet]
-        public IEnumerable<UserModel> GetUsers()
+        public IEnumerable<UserMiniModel> GetUsers()
         {
             return _userService.GetUsers()
-                .ProjectTo<UserModel>(_mapper.ConfigurationProvider)
+                .ProjectTo<UserMiniModel>(_mapper.ConfigurationProvider)
                 .AsEnumerable();
         }
 
         [HttpGet]
-        public async Task<UserModel> GetUserById(Guid userId)
+        public async Task<UserMiniModel> GetUserById(Guid userId)
         {
             User user = await _userService.GetUserById(userId);
-            return _mapper.Map<UserModel>(user);
+            return _mapper.Map<UserMiniModel>(user);
+        }
+
+        [HttpGet]
+        public UserModel? GetUserInfoById(Guid userId)
+        {
+            return _userService.GetUserInfoById(userId)
+            .ProjectTo<UserModel>(_mapper.ConfigurationProvider)
+            .FirstOrDefault();
         }
 
         [HttpGet]

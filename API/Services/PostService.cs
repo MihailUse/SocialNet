@@ -19,6 +19,7 @@ namespace API.Services
         {
             return _dataContext.Posts
                 .Include(x => x.Files)
+                .Include(x => x.Author)
                 .OrderByDescending(x => x.CreatedAt)
                 .Take(take)
                 .Skip(skip)
@@ -29,6 +30,7 @@ namespace API.Services
         {
             return _dataContext.Posts
                 .Include(x => x.Files)
+                .Include(x => x.Author)
                 .Where(x => x.Author.Id == userId)
                 .OrderByDescending(x => x.CreatedAt)
                 .AsNoTracking();
