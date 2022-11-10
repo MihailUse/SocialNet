@@ -26,7 +26,7 @@ namespace API
 
             builder.Services.Configure<AuthConfig>(authSection);
             builder.Services.AddDbContext<DAL.DataContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("PostgreSQL")));
-            builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+            builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
 
             builder.Services.AddScoped<UserService>();
             builder.Services.AddScoped<AuthService>();

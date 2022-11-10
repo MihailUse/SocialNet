@@ -46,8 +46,8 @@ namespace API.Controllers
         public UserModel? GetUserInfoById(Guid userId)
         {
             return _userService.GetUserInfoById(userId)
-            .ProjectTo<UserModel>(_mapper.ConfigurationProvider)
-            .FirstOrDefault();
+                .ProjectTo<UserModel>(_mapper.ConfigurationProvider)
+                .FirstOrDefault();
         }
 
         [HttpGet]
