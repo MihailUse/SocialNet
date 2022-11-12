@@ -1,8 +1,8 @@
-﻿using API.Constants;
-using API.Models.Post;
+﻿using API.Models.Post;
 using API.Services;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
+using Common.Constants;
 using Common.Extentions;
 using DAL.Entities;
 using Microsoft.AspNetCore.Authorization;

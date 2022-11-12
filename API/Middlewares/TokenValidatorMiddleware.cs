@@ -1,12 +1,11 @@
-﻿using API.Constants;
-using API.Services;
+﻿using API.Services;
+using Common.Constants;
 using DAL.Entities;
 using System.Net;
 
 namespace API.Middlewares
 {
     // You may need to install the Microsoft.AspNetCore.Http.Abstractions package into your project
-    // TODO: try IMiddleware
     public class TokenValidatorMiddleware
     {
         private readonly RequestDelegate _next;

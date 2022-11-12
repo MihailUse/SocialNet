@@ -1,4 +1,4 @@
-﻿namespace API.Constants
+﻿namespace Common.Constants
 {
     public static class TokenClaimTypes
     {

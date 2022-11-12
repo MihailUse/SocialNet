@@ -1,6 +1,6 @@
 ﻿using API.Configs;
-using API.Constants;
 using API.Models.Auth;
+using Common.Constants;
 using Common.Extentions;
 using DAL;
 using DAL.Entities;
