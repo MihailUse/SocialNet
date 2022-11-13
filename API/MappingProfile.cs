@@ -17,8 +17,8 @@ namespace API
                 .ForMember(d => d.PasswordHash, m => m.MapFrom(s => HashHelper.GetHash(s.Password)));
             CreateMap<UpdateUserModel, User>();
             CreateProjection<User, UserModel>()
-                .ForMember(d => d.FollowerCount, m => m.MapFrom(s => s.Followers.Count()))
-                .ForMember(d => d.PostCount, m => m.MapFrom(s => s.Posts.Count()));
+                .ForMember(d => d.FollowerCount, m => m.MapFrom(s => s.Followers!.Count()))
+                .ForMember(d => d.PostCount, m => m.MapFrom(s => s.Posts!.Count()));
             CreateMap<User, UserMiniModel>();
             CreateMap<Avatar, MetadataModel>().ReverseMap();
 

@@ -21,8 +21,8 @@ namespace API.Services
                 .Include(x => x.Files)
                 .Include(x => x.Author)
                 .OrderByDescending(x => x.CreatedAt)
-                .Take(take)
                 .Skip(skip)
+                .Take(take)
                 .AsNoTracking();
         }
 
@@ -74,6 +74,16 @@ namespace API.Services
 
             _dataContext.Posts.Remove(post);
             await _dataContext.SaveChangesAsync();
+        }
+
+        public async Task<PostFile> GetPostAttach(Guid attachId)
+        {
+            PostFile? postFile = await _dataContext.PostFiles.FirstOrDefaultAsync(x => x.Id == attachId);
+
+            if (postFile == null)
+                throw new Exception("Attach not found");
+
+            return postFile;
         }
     }
 }

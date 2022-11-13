@@ -38,7 +38,8 @@ namespace API.Services
         public IQueryable<User> GetUserInfoById(Guid userId)
         {
             return _dataContext.Users
-                .Include(x => x.Avatar);
+                .Include(x => x.Avatar)
+                .Where(x => x.Id == userId);
         }
 
         private async Task<User> GetUserByEmail(string email)
@@ -53,9 +54,9 @@ namespace API.Services
             return user;
         }
 
-        public async Task<Avatar> GetUserAvatar(Guid userId)
+        public async Task<Avatar> GetUserAvatar(Guid attachId)
         {
-            Avatar? avatar = await _dataContext.Avatars.FirstOrDefaultAsync(x => x.UserId == userId);
+            Avatar? avatar = await _dataContext.Avatars.FirstOrDefaultAsync(x => x.Id == attachId);
 
             if (avatar == null)
                 throw new Exception("Avatar not found");

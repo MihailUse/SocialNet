@@ -1,5 +1,6 @@
 ﻿using API.Models.Attach;
 using API.Services;
+using DAL.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,10 +10,14 @@ namespace API.Controllers
     [ApiController]
     public class AttachController : ControllerBase
     {
+        private readonly UserService _userService;
+        private readonly PostService _postService;
         private readonly AttachService _attachService;
 
-        public AttachController(AttachService attachService)
+        public AttachController(UserService userService, PostService postService, AttachService attachService)
         {
+            _userService = userService;
+            _postService = postService;
             _attachService = attachService;
         }
 
@@ -35,18 +40,28 @@ namespace API.Controllers
             return await _attachService.SaveTempFile(file);
         }
 
-        [HttpPost]
-        public FileStreamResult GetFile(MetadataModel metadata)
+        [HttpGet]
+        public async Task<FileResult> GetUserAvatar(Guid attachId, bool download = false)
         {
-            FileStream fs = _attachService.GetStream(metadata.Id);
-            return File(fs, metadata.MimeType);
+            Attach attach = await _userService.GetUserAvatar(attachId);
+            return RenderAttach(attach, download);
         }
 
-        [HttpPost]
-        public FileResult DownloadFile(MetadataModel metadata)
+        [HttpGet]
+        public async Task<FileResult> GetPostAttach(Guid attachId, bool download = false)
         {
-            FileStream fs = _attachService.GetStream(metadata.Id);
-            return File(fs, metadata.MimeType, metadata.Name);
+            Attach attach = await _postService.GetPostAttach(attachId);
+            return RenderAttach(attach, download);
+        }
+
+        private FileStreamResult RenderAttach(Attach attach, bool download)
+        {
+            FileStream fs = _attachService.GetStream(attach.Id);
+
+            if (download)
+                return File(fs, attach.MimeType, attach.Name);
+
+            return File(fs, attach.MimeType);
         }
     }
 }

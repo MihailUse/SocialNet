@@ -18,13 +18,11 @@ namespace API.Controllers
     {
         private readonly IMapper _mapper;
         private readonly UserService _userService;
-        private readonly AttachService _attachService;
 
-        public UserController(IMapper mapper, UserService userService, AttachService attachService)
+        public UserController(IMapper mapper, UserService userService)
         {
             _mapper = mapper;
             _userService = userService;
-            _attachService = attachService;
         }
 
         [HttpGet]
@@ -48,18 +46,6 @@ namespace API.Controllers
             return _userService.GetUserInfoById(userId)
                 .ProjectTo<UserModel>(_mapper.ConfigurationProvider)
                 .FirstOrDefault();
-        }
-
-        [HttpGet]
-        public async Task<FileResult> GetUserAvatar(Guid userId, bool download = false)
-        {
-            Avatar avatar = await _userService.GetUserAvatar(userId);
-            FileStream fs = _attachService.GetStream(avatar.Id);
-
-            if (download)
-                return File(fs, avatar.MimeType, avatar.Name);
-
-            return File(fs, avatar.MimeType);
         }
 
         [HttpGet]

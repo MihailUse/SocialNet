@@ -34,8 +34,7 @@ namespace API.Services
             if (!File.Exists(tempFilePath))
                 throw new Exception("Temp file not found");
 
-            File.Copy(tempFilePath, filePath, true);
-            File.Delete(tempFilePath);
+            File.Move(tempFilePath, filePath, true);
         }
 
         public FileStream GetStream(Guid fileId)
@@ -43,5 +42,5 @@ namespace API.Services
             string filePath = Path.Combine(_attachPath, fileId.ToString());
             return new FileStream(filePath, FileMode.Open);
         }
-    }
+    } 
 }
