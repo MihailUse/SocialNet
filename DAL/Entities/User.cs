@@ -17,6 +17,7 @@ namespace DAL.Entities
 
         public virtual ICollection<Post>? Posts { get; set; } = null!;
         public virtual ICollection<Comment>? Comments { get; set; } = null!;
+        public virtual ICollection<PostLike>? PostLikes { get; set; } = null!;
         public virtual ICollection<UserSession>? Sessions { get; set; } = null!;
 
         [InverseProperty("Following")]

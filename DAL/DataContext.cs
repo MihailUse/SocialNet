@@ -8,13 +8,14 @@ namespace DAL
     public class DataContext : DbContext
     {
         public DbSet<User> Users => Set<User>();
+        public DbSet<Avatar> Avatars => Set<Avatar>();
         public DbSet<Follower> Followers => Set<Follower>();
+        public DbSet<UserSession> UserSessions => Set<UserSession>();
         public DbSet<Post> Posts => Set<Post>();
         public DbSet<Comment> Comments => Set<Comment>();
-        public DbSet<UserSession> UserSessions => Set<UserSession>();
-        public DbSet<Attach> Attaches => Set<Attach>();
-        public DbSet<Avatar> Avatars => Set<Avatar>();
         public DbSet<PostFile> PostFiles => Set<PostFile>();
+        public DbSet<PostLike> PostLikes => Set<PostLike>();
+        public DbSet<Attach> Attaches => Set<Attach>();
 
         public DataContext(DbContextOptions<DataContext> options) : base(options) { }
 
@@ -55,6 +56,8 @@ namespace DAL
 
             modelBuilder.Entity<Follower>()
                 .HasKey(x => new { x.FollewerId, x.FollowingId });
+            modelBuilder.Entity<PostLike>()
+                .HasKey(x => new { x.PostId, x.UserId });
 
             modelBuilder.Entity<Avatar>().ToTable(nameof(Avatars));
             modelBuilder.Entity<PostFile>().ToTable(nameof(PostFiles));

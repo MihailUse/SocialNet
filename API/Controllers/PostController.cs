@@ -49,6 +49,13 @@ namespace API.Controllers
             return await _postService.CreatePost(post);
         }
 
+        [HttpPost]
+        public async Task ChangeLikeStatus(Guid postId)
+        {
+            Guid userId = User.GetClaimValue<Guid>(TokenClaimTypes.UserId);
+            await _postService.ChangeLikeStatus(userId, postId);
+        }
+
         [HttpDelete]
         public async Task DeletePost(Guid postId)
         {

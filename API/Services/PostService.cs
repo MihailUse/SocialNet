@@ -85,5 +85,20 @@ namespace API.Services
 
             return postFile;
         }
+
+        public async Task ChangeLikeStatus(Guid userId, Guid postId)
+        {
+            Post post = await GetPostById(postId);
+
+            PostLike? postLike = await _dataContext.PostLikes
+                .FirstOrDefaultAsync(x => x.PostId == postId && x.UserId == userId);
+
+            if (postLike == null)
+                _dataContext.PostLikes.Add(new PostLike(userId, postId));
+            else
+                _dataContext.PostLikes.Remove(postLike);
+
+            await _dataContext.SaveChangesAsync();
+        }
     }
 }
