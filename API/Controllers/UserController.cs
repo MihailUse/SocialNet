@@ -1,11 +1,8 @@
 ﻿using API.Models.Attach;
 using API.Models.User;
 using API.Services;
-using AutoMapper;
-using AutoMapper.QueryableExtensions;
 using Common.Constants;
 using Common.Extentions;
-using DAL.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -14,63 +11,58 @@ namespace API.Controllers
     [Route("api/[controller]/[action]")]
     [ApiController]
     [Authorize]
+    [ApiExplorerSettings(GroupName = SwaggerDefinitionNames.Api)]
     public class UserController : ControllerBase
     {
-        private readonly IMapper _mapper;
         private readonly UserService _userService;
 
-        public UserController(IMapper mapper, UserService userService)
+        public UserController(UserService userService, LinkGeneratorService linkGenerator)
         {
-            _mapper = mapper;
             _userService = userService;
+
+            linkGenerator.AvatarLinkGenerator = x => Url.ControllerAction<AttachController>(nameof(AttachController.GetUserAvatar), new { userId = x.UserId });
+            linkGenerator.AttachLinkGenerator = x => Url.ControllerAction<AttachController>(nameof(AttachController.GetUserAttach), new { attachId = x.Id });
         }
 
+        // for testing
         [HttpGet]
-        public IEnumerable<UserMiniModel> GetUsers()
+        [AllowAnonymous]
+        public IEnumerable<UserModel> GetUsers()
         {
-            return _userService.GetUsers()
-                .ProjectTo<UserMiniModel>(_mapper.ConfigurationProvider)
-                .AsEnumerable();
-        }
-
-        [HttpGet]
-        public async Task<UserMiniModel> GetUserById(Guid userId)
-        {
-            User user = await _userService.GetUserById(userId);
-            return _mapper.Map<UserMiniModel>(user);
-        }
-
-        [HttpGet]
-        public UserModel? GetUserInfoById(Guid userId)
-        {
-            return _userService.GetUserInfoById(userId)
-                .ProjectTo<UserModel>(_mapper.ConfigurationProvider)
-                .FirstOrDefault();
+            return _userService.GetUsers();
         }
 
         [HttpGet]
         public IEnumerable<MetadataModel> GetUserAttaches()
         {
-            Guid id = User.GetClaimValue<Guid>(TokenClaimTypes.UserId);
-            return _userService.GetUserAttaches(id)
-                .ProjectTo<MetadataModel>(_mapper.ConfigurationProvider)
-                .AsEnumerable();
+            Guid userId = User.GetClaimValue<Guid>(TokenClaimTypes.UserId);
+            return _userService.GetUserAttaches(userId);
+        }
+
+        [HttpGet]
+        public IEnumerable<SearchListUserModel> SearchUsers(string search, int skip = 0, int take = 20)
+        {
+            return _userService.SearchUsers(search, skip, take);
+        }
+
+        [HttpGet]
+        public async Task<UserProfileModel> GetUserProfile(Guid userId)
+        {
+            return await _userService.GetUserProfile(userId);
         }
 
         [HttpPost]
         [AllowAnonymous]
-        public async Task<Guid> CreateUser(CreateUserModel model)
+        public async Task<Guid> CreateUser(CreateUserModel createModel)
         {
-            User user = _mapper.Map<User>(model);
-            return await _userService.CreateUser(user);
+            return await _userService.CreateUser(createModel);
         }
 
         [HttpPost]
         public async Task SetUserAvatar(MetadataModel metadata)
         {
-            Guid id = User.GetClaimValue<Guid>(TokenClaimTypes.UserId);
-            Avatar avatar = _mapper.Map<Avatar>(metadata);
-            await _userService.SetUserAvatar(id, avatar);
+            Guid userId = User.GetClaimValue<Guid>(TokenClaimTypes.UserId);
+            await _userService.SetUserAvatar(userId, metadata);
         }
 
         [HttpPost]
@@ -81,18 +73,17 @@ namespace API.Controllers
         }
 
         [HttpPatch]
-        public async Task UpdateUser(UpdateUserModel model)
+        public async Task UpdateUser(UpdateUserModel updateModel)
         {
-            Guid id = User.GetClaimValue<Guid>(TokenClaimTypes.UserId);
-            User user = _mapper.Map<User>(model);
-            await _userService.UpdateUser(id, user);
+            Guid userId = User.GetClaimValue<Guid>(TokenClaimTypes.UserId);
+            await _userService.UpdateUser(userId, updateModel);
         }
 
         [HttpDelete]
         public async Task DeleteUser()
         {
-            Guid id = User.GetClaimValue<Guid>(TokenClaimTypes.UserId);
-            await _userService.DeleteUser(id);
+            Guid userId = User.GetClaimValue<Guid>(TokenClaimTypes.UserId);
+            await _userService.DeleteUser(userId);
         }
     }
 }

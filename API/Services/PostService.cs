@@ -1,4 +1,8 @@
-﻿using DAL;
+﻿using API.Exceptions;
+using API.Models.Post;
+using AutoMapper;
+using AutoMapper.QueryableExtensions;
+using DAL;
 using DAL.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -6,48 +10,67 @@ namespace API.Services
 {
     public class PostService
     {
+        private readonly IMapper _mapper;
         private readonly DataContext _dataContext;
         private readonly AttachService _attachService;
+        private readonly LinkGeneratorService _linkGeneratorService;
 
-        public PostService(DataContext dataContext, AttachService attachService)
+        public PostService(IMapper mapper, DataContext dataContext, AttachService attachService, LinkGeneratorService linkGeneratorService)
         {
+            _mapper = mapper;
             _dataContext = dataContext;
             _attachService = attachService;
+            _linkGeneratorService = linkGeneratorService;
         }
 
-        public IQueryable<Post> GetPosts(int skip, int take)
+        public IEnumerable<PostModel> GetPosts(int skip, int take)
         {
             return _dataContext.Posts
-                .Include(x => x.Files)
-                .Include(x => x.Author)
+                .ProjectTo<PostModel>(_mapper.ConfigurationProvider, _linkGeneratorService)
                 .OrderByDescending(x => x.CreatedAt)
                 .Skip(skip)
                 .Take(take)
-                .AsNoTracking();
+                .AsNoTracking()
+                .AsEnumerable();
         }
 
-        public IQueryable<Post> GetPostsByAuthor(Guid userId)
+        public IEnumerable<PostModel> GetPersonalPosts(Guid userId, int skip, int take)
+        {
+            return _dataContext.Followers
+                .Where(x => x.FollowingId == userId)
+                .Select(x => x.Follewer.Posts)
+                .ProjectTo<PostModel>(_mapper.ConfigurationProvider, _linkGeneratorService)
+                .OrderByDescending(x => x.CreatedAt)
+                .Skip(skip)
+                .Take(take)
+                .AsNoTracking()
+                .AsEnumerable();
+        }
+
+        public IEnumerable<PostModel> GetUserPosts(Guid userId, int skip, int take)
         {
             return _dataContext.Posts
-                .Include(x => x.Files)
-                .Include(x => x.Author)
                 .Where(x => x.Author.Id == userId)
+                .ProjectTo<PostModel>(_mapper.ConfigurationProvider, _linkGeneratorService)
                 .OrderByDescending(x => x.CreatedAt)
-                .AsNoTracking();
+                .Skip(skip)
+                .Take(take)
+                .AsNoTracking()
+                .AsEnumerable();
         }
 
-        public async Task<Guid> CreatePost(Post post)
+        public async Task<Guid> CreatePost(Guid authorId, CreatePostModel createModel)
         {
+            Post post = _mapper.Map<Post>(createModel);
+            post.AuthorId = authorId;
 
-            if (post.Files != null)
+            if (post.Attaches != null)
             {
-                List<PostFile> files = post.Files.ToList();
-
-                for (int i = 0; i < files.Count; i++)
+                Parallel.ForEach(post.Attaches, postAttach =>
                 {
-                    files[i].AuthorId = post.AuthorId;
-                    _attachService.SaveAttach(files[i].Id);
-                }
+                    postAttach.AuthorId = authorId;
+                    _attachService.SaveAttach(postAttach.Id);
+                });
             }
 
             await _dataContext.AddAsync(post);
@@ -60,7 +83,7 @@ namespace API.Services
             Post? post = await _dataContext.Posts.FirstOrDefaultAsync(post => post.Id == postId);
 
             if (post == null)
-                throw new Exception("Post not found");
+                throw new NotFoundServiceException("Post not found");
 
             return post;
         }
@@ -70,25 +93,27 @@ namespace API.Services
             Post post = await GetPostById(postId);
 
             if (post.AuthorId != userId)
-                throw new Exception("User no permission");
+                throw new AccessDeniedServiceException("Access denied");
 
             _dataContext.Posts.Remove(post);
             await _dataContext.SaveChangesAsync();
         }
 
-        public async Task<PostFile> GetPostAttach(Guid attachId)
+        public async Task<PostAttach> GetPostAttach(Guid postId, Guid attachId)
         {
-            PostFile? postFile = await _dataContext.PostFiles.FirstOrDefaultAsync(x => x.Id == attachId);
+            PostAttach? postFile = await _dataContext.PostAttaches
+                .FirstOrDefaultAsync(x => x.PostId == postId && x.Id == attachId);
 
             if (postFile == null)
-                throw new Exception("Attach not found");
+                throw new NotFoundServiceException("Attach not found");
 
             return postFile;
         }
 
         public async Task ChangeLikeStatus(Guid userId, Guid postId)
         {
-            Post post = await GetPostById(postId);
+            if (await CheckPostExists(postId))
+                throw new NotFoundServiceException("Post not found");
 
             PostLike? postLike = await _dataContext.PostLikes
                 .FirstOrDefaultAsync(x => x.PostId == postId && x.UserId == userId);
@@ -99,6 +124,13 @@ namespace API.Services
                 _dataContext.PostLikes.Remove(postLike);
 
             await _dataContext.SaveChangesAsync();
+        }
+
+        private async Task<bool> CheckPostExists(Guid postId)
+        {
+            return await _dataContext.Posts
+                .IgnoreQueryFilters()
+                .AnyAsync(x => x.Id == postId);
         }
     }
 }

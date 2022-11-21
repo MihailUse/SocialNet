@@ -9,6 +9,6 @@ namespace API.Models.Post
         public bool IsCommentable { get; set; } = true;
 
         [MaxLength(15)]
-        public List<MetadataModel>? Files { get; set; }
+        public List<MetadataModel>? Attaches { get; set; }
     }
 }

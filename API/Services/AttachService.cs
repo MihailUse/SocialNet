@@ -1,4 +1,5 @@
-﻿using API.Models.Attach;
+﻿using API.Exceptions;
+using API.Models.Attach;
 
 namespace API.Services
 {
@@ -11,13 +12,19 @@ namespace API.Services
         {
             _tempPath = Path.GetTempPath();
             _attachPath = Path.Combine(Directory.GetCurrentDirectory(), "Attaches");
+
             Directory.CreateDirectory(_tempPath);
             Directory.CreateDirectory(_attachPath);
         }
 
         public async Task<MetadataModel> SaveTempFile(IFormFile file)
         {
-            MetadataModel metadata = new MetadataModel(file.FileName, file.ContentType, file.Length);
+            MetadataModel metadata = new MetadataModel()
+            {
+                Name = file.FileName,
+                MimeType = file.ContentType,
+                Size = file.Length
+            };
             string filePath = Path.Combine(_tempPath, metadata.Id.ToString());
 
             using (var stream = File.Create(filePath))
@@ -26,13 +33,13 @@ namespace API.Services
             return metadata;
         }
 
-        public void SaveAttach(Guid fileName)
+        public void SaveAttach(Guid fileId)
         {
-            string filePath = Path.Combine(_attachPath, fileName.ToString());
-            string tempFilePath = Path.Combine(_tempPath, fileName.ToString());
+            string filePath = Path.Combine(_attachPath, fileId.ToString());
+            string tempFilePath = Path.Combine(_tempPath, fileId.ToString());
 
             if (!File.Exists(tempFilePath))
-                throw new Exception("Temp file not found");
+                throw new NotFoundServiceException("Temp file not found");
 
             File.Move(tempFilePath, filePath, true);
         }
@@ -42,5 +49,5 @@ namespace API.Services
             string filePath = Path.Combine(_attachPath, fileId.ToString());
             return new FileStream(filePath, FileMode.Open);
         }
-    } 
+    }
 }

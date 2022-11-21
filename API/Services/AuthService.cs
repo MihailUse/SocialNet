@@ -1,4 +1,5 @@
 ﻿using API.Configs;
+using API.Exceptions;
 using API.Models.Auth;
 using Common.Constants;
 using Common.Extentions;
@@ -52,7 +53,7 @@ namespace API.Services
                 UserSession userSession = await GetUserSessionByRefreshTokenId(refreshTokenId);
 
                 if (!userSession.IsActive)
-                    throw new Exception("Session is not active");
+                    throw new AuthException("Session is not active");
 
                 // update RefreshTokenId
                 userSession.RefreshTokenId = Guid.NewGuid();
@@ -61,17 +62,17 @@ namespace API.Services
                 return GenerateTokens(userSession);
             }
 
-            throw new Exception("Invalid token");
+            throw new AuthException("Invalid token");
         }
 
-        public async Task<UserSession> GetUserSessionById(Guid userId)
+        public async Task<UserSession> GetUserSessionById(Guid sessionId)
         {
             UserSession? userSession = await _context.UserSessions
                 .Include(x => x.User)
-                .FirstOrDefaultAsync(x => x.Id == userId);
+                .FirstOrDefaultAsync(x => x.Id == sessionId);
 
             if (userSession == null)
-                throw new Exception("Session not found");
+                throw new AuthException("Session not found");
 
             return userSession;
         }
@@ -83,7 +84,7 @@ namespace API.Services
                 .FirstOrDefaultAsync(x => x.RefreshTokenId == refreshTokenId);
 
             if (userSession == null)
-                throw new Exception("Session not found");
+                throw new AuthException("Session not found");
 
             return userSession;
         }

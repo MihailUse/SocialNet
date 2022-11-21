@@ -10,5 +10,6 @@
 
         public virtual Post Post { get; set; } = null!;
         public virtual User Author { get; set; } = null!;
+        public ICollection<CommentLike>? CommentLikes { get; set; }
     }
 }

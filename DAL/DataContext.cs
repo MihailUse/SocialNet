@@ -13,8 +13,9 @@ namespace DAL
         public DbSet<UserSession> UserSessions => Set<UserSession>();
         public DbSet<Post> Posts => Set<Post>();
         public DbSet<Comment> Comments => Set<Comment>();
-        public DbSet<PostFile> PostFiles => Set<PostFile>();
+        public DbSet<PostAttach> PostAttaches => Set<PostAttach>();
         public DbSet<PostLike> PostLikes => Set<PostLike>();
+        public DbSet<CommentLike> CommentLikes => Set<CommentLike>();
         public DbSet<Attach> Attaches => Set<Attach>();
 
         public DataContext(DbContextOptions<DataContext> options) : base(options) { }
@@ -57,10 +58,12 @@ namespace DAL
             modelBuilder.Entity<Follower>()
                 .HasKey(x => new { x.FollewerId, x.FollowingId });
             modelBuilder.Entity<PostLike>()
-                .HasKey(x => new { x.PostId, x.UserId });
+                .HasKey(x => new { x.UserId, x.PostId });
+            modelBuilder.Entity<CommentLike>()
+                .HasKey(x => new { x.UserId, x.CommentId });
 
             modelBuilder.Entity<Avatar>().ToTable(nameof(Avatars));
-            modelBuilder.Entity<PostFile>().ToTable(nameof(PostFiles));
+            modelBuilder.Entity<PostAttach>().ToTable(nameof(PostAttaches));
         }
 
         private void ConfigureSoftDeleteFilter(ModelBuilder builder)

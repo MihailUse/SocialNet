@@ -1,10 +1,7 @@
 ﻿using API.Models.Post;
 using API.Services;
-using AutoMapper;
-using AutoMapper.QueryableExtensions;
 using Common.Constants;
 using Common.Extentions;
-using DAL.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,40 +10,42 @@ namespace API.Controllers
     [Route("api/[controller]/[action]")]
     [ApiController]
     [Authorize]
+    [ApiExplorerSettings(GroupName = SwaggerDefinitionNames.Api)]
     public class PostController : ControllerBase
     {
-        private readonly IMapper _mapper;
         private readonly PostService _postService;
 
-        public PostController(IMapper mapper, PostService postService)
+        public PostController(PostService postService, LinkGeneratorService linkGenerator)
         {
-            _mapper = mapper;
             _postService = postService;
+
+            linkGenerator.PostFileLinkGenerator = x => Url.ControllerAction<AttachController>(nameof(AttachController.GetPostAttach), new { postId = x.PostId, attachId = x.Id });
         }
 
         [HttpGet]
         public IEnumerable<PostModel> GetPosts(int skip = 0, int take = 20)
         {
-            return _postService.GetPosts(skip, take)
-                .ProjectTo<PostModel>(_mapper.ConfigurationProvider)
-                .AsEnumerable();
+            return _postService.GetPosts(skip, take);
         }
 
         [HttpGet]
-        public IEnumerable<PostModel> GetPostsByAuthor(Guid userId)
+        public IEnumerable<PostModel> GetPersonalPosts(int skip = 0, int take = 20)
         {
-            return _postService.GetPostsByAuthor(userId)
-                .ProjectTo<PostModel>(_mapper.ConfigurationProvider)
-                .AsEnumerable();
+            Guid userId = User.GetClaimValue<Guid>(TokenClaimTypes.UserId);
+            return _postService.GetPersonalPosts(userId, skip, take);
+        }
+
+        [HttpGet]
+        public IEnumerable<PostModel> GetUserPosts(Guid userId, int skip = 0, int take = 20)
+        {
+            return _postService.GetUserPosts(userId, skip, take);
         }
 
         [HttpPost]
-        public async Task<Guid> CreatePost(CreatePostModel model)
+        public async Task<Guid> CreatePost(CreatePostModel createModel)
         {
-            Post post = _mapper.Map<Post>(model);
-            post.AuthorId = User.GetClaimValue<Guid>(TokenClaimTypes.UserId);
-
-            return await _postService.CreatePost(post);
+            Guid userId = User.GetClaimValue<Guid>(TokenClaimTypes.UserId);
+            return await _postService.CreatePost(userId, createModel);
         }
 
         [HttpPost]

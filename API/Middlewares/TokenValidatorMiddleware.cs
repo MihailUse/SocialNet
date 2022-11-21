@@ -1,7 +1,8 @@
-﻿using API.Services;
+﻿using API.Exceptions;
+using API.Services;
 using Common.Constants;
+using Common.Extentions;
 using DAL.Entities;
-using System.Net;
 
 namespace API.Middlewares
 {
@@ -17,29 +18,20 @@ namespace API.Middlewares
 
         public async Task Invoke(HttpContext httpContext, AuthService authService)
         {
-            string? sessionIdString = httpContext.User.FindFirst(x => x.Type == TokenClaimTypes.SessionId)?.Value;
-            string? RefreshTokenIdString = httpContext.User.FindFirst(x => x.Type == TokenClaimTypes.RefreshTokenId)?.Value;
+            Guid sessionId = httpContext.User.GetClaimValue<Guid>(TokenClaimTypes.SessionId, false);
+            Guid RefreshTokenId = httpContext.User.GetClaimValue<Guid>(TokenClaimTypes.RefreshTokenId, false);
 
             // check it's not a refresh token
-            if (RefreshTokenIdString != null)
-            {
-                httpContext.Response.Clear();
-                httpContext.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
-                await httpContext.Response.WriteAsync("Invalid token");
-                return;
-            }
+            if (RefreshTokenId != default)
+                throw new AuthException("Invalid token");
 
-            if (Guid.TryParse(sessionIdString, out Guid sessionId))
+
+            if (sessionId != default)
             {
                 UserSession userSession = await authService.GetUserSessionById(sessionId);
 
                 if (!userSession.IsActive)
-                {
-                    httpContext.Response.Clear();
-                    httpContext.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
-                    await httpContext.Response.WriteAsync("Invalid token");
-                    return;
-                }
+                    throw new AuthException("Invalid token");
             }
 
             await _next(httpContext);

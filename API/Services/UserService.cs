@@ -1,3 +1,8 @@
+using API.Exceptions;
+using API.Models.Attach;
+using API.Models.User;
+using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using Common;
 using DAL;
 using DAL.Entities;
@@ -7,84 +12,109 @@ namespace API.Services
 {
     public class UserService
     {
+        private readonly IMapper _mapper;
         private readonly DataContext _dataContext;
         private readonly AttachService _attachService;
+        private readonly LinkGeneratorService _linkGeneratorService;
 
-        public UserService(DataContext context, AttachService attachService)
+        public UserService(IMapper mapper, DataContext context, AttachService attachService, LinkGeneratorService linkGeneratorService)
         {
+            _mapper = mapper;
             _dataContext = context;
             _attachService = attachService;
+            _linkGeneratorService = linkGeneratorService;
         }
 
-        public IQueryable<User> GetUsers()
+        // for testing
+        public IEnumerable<UserModel> GetUsers()
         {
             return _dataContext.Users
                 .Include(x => x.Avatar)
-                .AsNoTracking();
+                .ProjectTo<UserModel>(_mapper.ConfigurationProvider, _linkGeneratorService)
+                .IgnoreQueryFilters()
+                .AsNoTracking()
+                .AsEnumerable();
         }
 
-        public async Task<User> GetUserById(Guid userId)
-        {
-            User? user = await _dataContext.Users
-                .Include(x => x.Avatar)
-                .FirstOrDefaultAsync(x => x.Id == userId);
-
-            if (user == null)
-                throw new Exception("User not found");
-
-            return user;
-        }
-
-        public IQueryable<User> GetUserInfoById(Guid userId)
-        {
-            return _dataContext.Users
-                .Include(x => x.Avatar)
-                .Where(x => x.Id == userId);
-        }
-
-        private async Task<User> GetUserByEmail(string email)
-        {
-            User? user = await _dataContext.Users
-                .Include(x => x.Avatar)
-                .SingleAsync(x => x.Email.ToLower() == email.ToLower());
-
-            if (user == null)
-                throw new Exception("User not found");
-
-            return user;
-        }
-
-        public async Task<Avatar> GetUserAvatar(Guid attachId)
-        {
-            Avatar? avatar = await _dataContext.Avatars.FirstOrDefaultAsync(x => x.Id == attachId);
-
-            if (avatar == null)
-                throw new Exception("Avatar not found");
-
-            return avatar;
-        }
-
-        public IQueryable<Attach> GetUserAttaches(Guid userId)
+        public IEnumerable<MetadataModel> GetUserAttaches(Guid userId)
         {
             return _dataContext.Attaches
                 .Where(x => x.AuthorId == userId)
-                .AsNoTracking();
+                .ProjectTo<LinkMetadataModel>(_mapper.ConfigurationProvider, _linkGeneratorService)
+                .AsNoTracking()
+                .AsEnumerable();
         }
 
-        public async Task<Guid> CreateUser(User user)
+        public IEnumerable<SearchListUserModel> SearchUsers(string search, int skip, int take)
         {
-            if (await IsEmailExists(user.Email))
-                throw new Exception("Email already exists");
+            return _dataContext.Users
+                .Include(x => x.Avatar)
+                .Where(x => EF.Functions.ILike(x.Nickname, $"%{search}%") || EF.Functions.ILike(x.FullName!, $"%{search}%"))
+                .ProjectTo<SearchListUserModel>(_mapper.ConfigurationProvider, _linkGeneratorService)
+                .OrderByDescending(x => x.FollowerCount)
+                .Skip(skip)
+                .Take(take)
+                .AsNoTracking()
+                .AsEnumerable();
+        }
 
-            if (await IsNicknameExists(user.Nickname))
-                throw new Exception("Nickname already exists");
+        public async Task<UserProfileModel> GetUserProfile(Guid userId)
+        {
+            UserProfileModel? user = await _dataContext.Users
+                .Include(x => x.Avatar)
+                .Where(x => x.Id == userId)
+                .ProjectTo<UserProfileModel>(_mapper.ConfigurationProvider, _linkGeneratorService)
+                .OrderByDescending(x => x.FollowerCount)
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync();
+
+            if (user == null)
+                throw new NotFoundServiceException("User not found");
+
+            return user;
+        }
+
+        public async Task<Guid> CreateUser(CreateUserModel createModel)
+        {
+            User user = _mapper.Map<User>(createModel);
+
+            if (await CheckEmailExists(user.Email))
+                throw new InvalidParameterServiceException("Email already exists");
+
+            if (await CheckNicknameExists(user.Nickname))
+                throw new InvalidParameterServiceException("Nickname already exists");
 
             await _dataContext.Users.AddAsync(user);
             await _dataContext.SaveChangesAsync();
             return user.Id;
         }
 
-        public async Task<User> UpdateUser(Guid userId, User userOptions)
+        public async Task<Avatar> GetUserAvatar(Guid userId)
+        {
+            Avatar? avatar = await _dataContext.Avatars
+                .FirstOrDefaultAsync(x => x.UserId == userId);
+
+            if (avatar == null)
+                throw new NotFoundServiceException("Avatar not found");
+
+            return avatar;
+        }
+
+        public async Task<Attach> GetUserAttach(Guid userId, Guid attachId)
+        {
+            Attach? attach = await _dataContext.Attaches
+                .FirstOrDefaultAsync(x => x.Id == attachId);
+
+            if (attach == null)
+                throw new NotFoundServiceException("Attach not found");
+
+            if (attach.AuthorId != userId)
+                throw new AccessDeniedServiceException("Access denied");
+
+            return attach;
+        }
+
+        public async Task<UserModel> UpdateUser(Guid userId, UpdateUserModel userOptions)
         {
             User user = await GetUserById(userId);
 
@@ -93,12 +123,13 @@ namespace API.Services
             user.About = userOptions.About ?? user.About;
 
             await _dataContext.SaveChangesAsync();
-            return user;
+            return _mapper.Map<UserModel>(user);
         }
 
         public async Task DeleteUser(Guid userId)
         {
             User user = await GetUserById(userId);
+
             _dataContext.Users.Remove(user);
             await _dataContext.SaveChangesAsync();
         }
@@ -108,44 +139,73 @@ namespace API.Services
             User user = await GetUserByEmail(email);
 
             if (!HashHelper.Verify(user.PasswordHash, password))
-                throw new Exception("Password is incorrect");
+                throw new AuthException("Password is incorrect");
 
             return user;
         }
 
-        public async Task<bool> IsNicknameExists(string nickname)
+        public async Task ChangeFollowStatus(Guid followerId, Guid followingId)
+        {
+            if (followerId == followingId)
+                throw new InvalidParameterServiceException("User can not to subscribe to yourself");
+
+            User following = await GetUserById(followingId);
+            Follower? follower = await _dataContext.Followers
+                .FirstOrDefaultAsync(x => x.FollewerId == followerId && x.FollowingId == following.Id);
+
+            if (follower == null)
+                _dataContext.Followers.Add(new Follower(followerId, followingId));
+            else
+                _dataContext.Followers.Remove(follower);
+
+            await _dataContext.SaveChangesAsync();
+        }
+
+        public async Task SetUserAvatar(Guid userId, MetadataModel metadata)
+        {
+            User user = await GetUserById(userId);
+            Avatar avatar = _mapper.Map<Avatar>(metadata);
+            avatar.AuthorId = userId;
+            user.Avatar = avatar;
+
+            _attachService.SaveAttach(metadata.Id);
+
+            _dataContext.Users.Update(user);
+            await _dataContext.SaveChangesAsync();
+        }
+
+        private async Task<bool> CheckNicknameExists(string nickname)
         {
             return await _dataContext.Users.AnyAsync(x => x.Nickname == nickname);
         }
 
-        public async Task<bool> IsEmailExists(string email)
+        private async Task<bool> CheckEmailExists(string email)
         {
             return await _dataContext.Users.AnyAsync(x => x.Email.ToLower() == email.ToLower());
         }
 
-        public async Task ChangeFollowStatus(Guid followerId, Guid followingId)
+        private async Task<User> GetUserById(Guid userId)
         {
-            User following = await GetUserById(followingId);
+            User? user = await _dataContext.Users
+                .Include(x => x.Avatar)
+                .FirstOrDefaultAsync(x => x.Id == userId);
 
-            Follower? followerExists = await _dataContext.Followers
-                .FirstOrDefaultAsync(x => x.FollewerId == followerId && x.FollowingId == following.Id);
+            if (user == null)
+                throw new NotFoundServiceException("User not found");
 
-            if (followerExists == null)
-                _dataContext.Followers.Add(new Follower(followerId, followingId));
-            else
-                _dataContext.Followers.Remove(followerExists);
-
-            await _dataContext.SaveChangesAsync();
+            return user;
         }
 
-        public async Task SetUserAvatar(Guid userId, Avatar avatar)
+        private async Task<User> GetUserByEmail(string email)
         {
-            User user = await GetUserById(userId);
-            avatar.AuthorId = userId;
-            user.Avatar = avatar;
+            User? user = await _dataContext.Users
+                .Include(x => x.Avatar)
+                .FirstOrDefaultAsync(x => EF.Functions.ILike(x.Email, $"%{email}%"));
 
-            _attachService.SaveAttach(avatar.Id);
-            await _dataContext.SaveChangesAsync();
+            if (user == null)
+                throw new NotFoundServiceException("User not found");
+
+            return user;
         }
     }
 }

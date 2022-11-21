@@ -1,11 +1,14 @@
 using API.Configs;
+using API.Mapper;
 using API.Middlewares;
 using API.Services;
+using Common.Constants;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
+using Swashbuckle.AspNetCore.SwaggerUI;
 
 namespace API
 {
@@ -32,6 +35,7 @@ namespace API
             builder.Services.AddScoped<AuthService>();
             builder.Services.AddScoped<PostService>();
             builder.Services.AddScoped<CommentService>();
+            builder.Services.AddScoped<LinkGeneratorService>();
             builder.Services.AddSingleton<AttachService>();
 
             builder.Services.AddAuthentication(defaultScheme: JwtBearerDefaults.AuthenticationScheme)
@@ -73,17 +77,24 @@ namespace API
             }
 
             app.UseSwagger();
-            app.UseSwaggerUI();
+            app.UseSwaggerUI(SetupSwaggerUiAction);
             app.UseHttpsRedirection();
             app.UseAuthentication();
             app.UseAuthorization();
 
             // add middlewares
+            app.UseExceptionHandlerMiddleware();
             app.UseTokenValidatorMiddleware();
 
             app.MapControllers();
 
             app.Run();
+        }
+
+        private static void SetupSwaggerUiAction(SwaggerUIOptions options)
+        {
+            options.SwaggerEndpoint($"{SwaggerDefinitionNames.Auth}/swagger.json", SwaggerDefinitionNames.Auth);
+            options.SwaggerEndpoint($"{SwaggerDefinitionNames.Api}/swagger.json", SwaggerDefinitionNames.Api);
         }
 
         private static void SetupSwaggerAction(SwaggerGenOptions options)
@@ -114,6 +125,9 @@ namespace API
                     new List<string>()
                 }
             });
+
+            options.SwaggerDoc(SwaggerDefinitionNames.Auth, new OpenApiInfo() { Title = SwaggerDefinitionNames.Auth });
+            options.SwaggerDoc(SwaggerDefinitionNames.Api, new OpenApiInfo() { Title = SwaggerDefinitionNames.Api });
         }
     }
 }

@@ -1,7 +1,8 @@
 ﻿namespace DAL.Entities
 {
-    public class PostFile : Attach
+    public class PostAttach : Attach
     {
+        public Guid PostId { get; set; }
         public virtual Post Post { get; set; } = null!;
     }
 }

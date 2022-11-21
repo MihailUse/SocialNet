@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace API.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20221114084630_AddPostLikes")]
-    partial class AddPostLikes
+    [Migration("20221121111133_AddLikes")]
+    partial class AddLikes
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -84,6 +84,21 @@ namespace API.Migrations
                     b.ToTable("Comments");
                 });
 
+            modelBuilder.Entity("DAL.Entities.CommentLike", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CommentId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("UserId", "CommentId");
+
+                    b.HasIndex("CommentId");
+
+                    b.ToTable("CommentLikes");
+                });
+
             modelBuilder.Entity("DAL.Entities.Follower", b =>
                 {
                     b.Property<Guid>("FollewerId")
@@ -133,15 +148,15 @@ namespace API.Migrations
 
             modelBuilder.Entity("DAL.Entities.PostLike", b =>
                 {
-                    b.Property<Guid>("PostId")
-                        .HasColumnType("uuid");
-
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
-                    b.HasKey("PostId", "UserId");
+                    b.Property<Guid>("PostId")
+                        .HasColumnType("uuid");
 
-                    b.HasIndex("UserId");
+                    b.HasKey("UserId", "PostId");
+
+                    b.HasIndex("PostId");
 
                     b.ToTable("PostLikes");
                 });
@@ -228,7 +243,7 @@ namespace API.Migrations
                     b.ToTable("Avatars", (string)null);
                 });
 
-            modelBuilder.Entity("DAL.Entities.PostFile", b =>
+            modelBuilder.Entity("DAL.Entities.PostAttach", b =>
                 {
                     b.HasBaseType("DAL.Entities.Attach");
 
@@ -237,7 +252,7 @@ namespace API.Migrations
 
                     b.HasIndex("PostId");
 
-                    b.ToTable("PostFiles", (string)null);
+                    b.ToTable("PostAttaches", (string)null);
                 });
 
             modelBuilder.Entity("DAL.Entities.Attach", b =>
@@ -268,6 +283,25 @@ namespace API.Migrations
                     b.Navigation("Author");
 
                     b.Navigation("Post");
+                });
+
+            modelBuilder.Entity("DAL.Entities.CommentLike", b =>
+                {
+                    b.HasOne("DAL.Entities.Comment", "Comment")
+                        .WithMany("CommentLikes")
+                        .HasForeignKey("CommentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("DAL.Entities.User", "User")
+                        .WithMany("CommentLikes")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Comment");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("DAL.Entities.Follower", b =>
@@ -347,16 +381,16 @@ namespace API.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("DAL.Entities.PostFile", b =>
+            modelBuilder.Entity("DAL.Entities.PostAttach", b =>
                 {
                     b.HasOne("DAL.Entities.Attach", null)
                         .WithOne()
-                        .HasForeignKey("DAL.Entities.PostFile", "Id")
+                        .HasForeignKey("DAL.Entities.PostAttach", "Id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("DAL.Entities.Post", "Post")
-                        .WithMany("Files")
+                        .WithMany("Attaches")
                         .HasForeignKey("PostId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -364,11 +398,16 @@ namespace API.Migrations
                     b.Navigation("Post");
                 });
 
+            modelBuilder.Entity("DAL.Entities.Comment", b =>
+                {
+                    b.Navigation("CommentLikes");
+                });
+
             modelBuilder.Entity("DAL.Entities.Post", b =>
                 {
-                    b.Navigation("Comments");
+                    b.Navigation("Attaches");
 
-                    b.Navigation("Files");
+                    b.Navigation("Comments");
 
                     b.Navigation("Likes");
                 });
@@ -376,6 +415,8 @@ namespace API.Migrations
             modelBuilder.Entity("DAL.Entities.User", b =>
                 {
                     b.Navigation("Avatar");
+
+                    b.Navigation("CommentLikes");
 
                     b.Navigation("Comments");
 

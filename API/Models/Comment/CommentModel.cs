@@ -1,4 +1,5 @@
-﻿using DAL.Entities;
+﻿using API.Models.User;
+using DAL.Entities;
 
 namespace API.Models.Comment
 {
@@ -6,8 +7,8 @@ namespace API.Models.Comment
     {
         public Guid Id { get; set; }
         public string Text { get; set; } = null!;
+        public int LikeCount { get; set; }
 
-        public Guid PostId { get; set; }
-        public Guid AuthorId { get; set; }
+        public UserModel Author { get; set; } = null!;
     }
 }
