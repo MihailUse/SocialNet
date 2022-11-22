@@ -16,7 +16,7 @@ namespace API.Mapper.MappingActions
 
         public void Process(PostAttach source, LinkMetadataModel destination, ResolutionContext context)
         {
-            destination.Link = _urlService.PostFileLinkGenerator?.Invoke(source);
+            destination.Link = _urlService.PostAttachLinkGenerator?.Invoke(source);
         }
     }
 }

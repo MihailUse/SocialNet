@@ -38,7 +38,7 @@ namespace API.Services
         {
             return _dataContext.Followers
                 .Where(x => x.FollowingId == userId)
-                .Select(x => x.Follewer.Posts)
+                .SelectMany(x => x.Follewer.Posts!)
                 .ProjectTo<PostModel>(_mapper.ConfigurationProvider, _linkGeneratorService)
                 .OrderByDescending(x => x.CreatedAt)
                 .Skip(skip)
@@ -112,7 +112,7 @@ namespace API.Services
 
         public async Task ChangeLikeStatus(Guid userId, Guid postId)
         {
-            if (await CheckPostExists(postId))
+            if (!await CheckPostExists(postId))
                 throw new NotFoundServiceException("Post not found");
 
             PostLike? postLike = await _dataContext.PostLikes

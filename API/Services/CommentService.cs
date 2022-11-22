@@ -63,7 +63,7 @@ namespace API.Services
 
         public async Task ChangeLikeStatus(Guid userId, Guid commentId)
         {
-            if (await CheckCommentExists(commentId))
+            if (!await CheckCommentExists(commentId))
                 throw new NotFoundServiceException("Comment not found");
 
             CommentLike? commentLike = await _dataContext.CommentLikes

@@ -15,9 +15,11 @@ namespace API.Controllers
     {
         private readonly CommentService _commentService;
 
-        public CommentController(CommentService commentService)
+        public CommentController(CommentService commentService, LinkGeneratorService linkGenerator)
         {
             _commentService = commentService;
+
+            linkGenerator.AvatarLinkGenerator = x => Url.ControllerAction<AttachController>(nameof(AttachController.GetUserAvatar), new { userId = x.UserId });
         }
 
         [HttpGet]
@@ -31,6 +33,13 @@ namespace API.Controllers
         {
             Guid userId = User.GetClaimValue<Guid>(TokenClaimTypes.UserId);
             return await _commentService.CreateComment(userId, createModel);
+        }
+
+        [HttpPost]
+        public async Task ChangeLikeStatus(Guid commentId)
+        {
+            Guid userId = User.GetClaimValue<Guid>(TokenClaimTypes.UserId);
+            await _commentService.ChangeLikeStatus(userId, commentId);
         }
 
         [HttpDelete]

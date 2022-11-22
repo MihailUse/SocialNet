@@ -3,6 +3,7 @@ using API.Mapper;
 using API.Middlewares;
 using API.Services;
 using Common.Constants;
+using DAL;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -19,8 +20,8 @@ namespace API
             WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
             // get configs
-            var authSection = builder.Configuration.GetSection(AuthConfig.Position);
-            var authConfig = authSection.Get<AuthConfig>();
+            IConfigurationSection authSection = builder.Configuration.GetSection(AuthConfig.Position);
+            AuthConfig? authConfig = authSection.Get<AuthConfig>();
 
             // Add services to the container.
             builder.Services.AddControllers();
@@ -28,7 +29,7 @@ namespace API
             builder.Services.AddSwaggerGen(SetupSwaggerAction);
 
             builder.Services.Configure<AuthConfig>(authSection);
-            builder.Services.AddDbContext<DAL.DataContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("PostgreSQL")));
+            builder.Services.AddDbContext<DataContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("PostgreSQL")));
             builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
 
             builder.Services.AddScoped<UserService>();
@@ -71,7 +72,7 @@ namespace API
             {
                 if (scope != null)
                 {
-                    var db = scope.ServiceProvider.GetRequiredService<DAL.DataContext>();
+                    DataContext db = scope.ServiceProvider.GetRequiredService<DataContext>();
                     db.Database.Migrate();
                 }
             }
@@ -93,8 +94,8 @@ namespace API
 
         private static void SetupSwaggerUiAction(SwaggerUIOptions options)
         {
-            options.SwaggerEndpoint($"{SwaggerDefinitionNames.Auth}/swagger.json", SwaggerDefinitionNames.Auth);
             options.SwaggerEndpoint($"{SwaggerDefinitionNames.Api}/swagger.json", SwaggerDefinitionNames.Api);
+            options.SwaggerEndpoint($"{SwaggerDefinitionNames.Auth}/swagger.json", SwaggerDefinitionNames.Auth);
         }
 
         private static void SetupSwaggerAction(SwaggerGenOptions options)

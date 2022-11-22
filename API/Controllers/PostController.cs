@@ -19,9 +19,11 @@ namespace API.Controllers
         {
             _postService = postService;
 
-            linkGenerator.PostFileLinkGenerator = x => Url.ControllerAction<AttachController>(nameof(AttachController.GetPostAttach), new { postId = x.PostId, attachId = x.Id });
+            linkGenerator.PostAttachLinkGenerator = x => Url.ControllerAction<AttachController>(nameof(AttachController.GetPostAttach), new { postId = x.PostId, attachId = x.Id });
+            linkGenerator.AvatarLinkGenerator = x => Url.ControllerAction<AttachController>(nameof(AttachController.GetUserAvatar), new { userId = x.UserId });
         }
 
+        // for testing
         [HttpGet]
         public IEnumerable<PostModel> GetPosts(int skip = 0, int take = 20)
         {

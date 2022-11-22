@@ -45,7 +45,7 @@ namespace API.Migrations
 
                     b.HasIndex("AuthorId");
 
-                    b.ToTable("Attaches");
+                    b.ToTable("Attaches", (string)null);
                 });
 
             modelBuilder.Entity("DAL.Entities.Comment", b =>
@@ -79,7 +79,7 @@ namespace API.Migrations
 
                     b.HasIndex("PostId");
 
-                    b.ToTable("Comments");
+                    b.ToTable("Comments", (string)null);
                 });
 
             modelBuilder.Entity("DAL.Entities.CommentLike", b =>
@@ -94,7 +94,7 @@ namespace API.Migrations
 
                     b.HasIndex("CommentId");
 
-                    b.ToTable("CommentLikes");
+                    b.ToTable("CommentLikes", (string)null);
                 });
 
             modelBuilder.Entity("DAL.Entities.Follower", b =>
@@ -109,7 +109,7 @@ namespace API.Migrations
 
                     b.HasIndex("FollowingId");
 
-                    b.ToTable("Followers");
+                    b.ToTable("Followers", (string)null);
                 });
 
             modelBuilder.Entity("DAL.Entities.Post", b =>
@@ -141,7 +141,7 @@ namespace API.Migrations
 
                     b.HasIndex("AuthorId");
 
-                    b.ToTable("Posts");
+                    b.ToTable("Posts", (string)null);
                 });
 
             modelBuilder.Entity("DAL.Entities.PostLike", b =>
@@ -156,7 +156,7 @@ namespace API.Migrations
 
                     b.HasIndex("PostId");
 
-                    b.ToTable("PostLikes");
+                    b.ToTable("PostLikes", (string)null);
                 });
 
             modelBuilder.Entity("DAL.Entities.User", b =>
@@ -200,7 +200,7 @@ namespace API.Migrations
                     b.HasIndex("Nickname")
                         .IsUnique();
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", (string)null);
                 });
 
             modelBuilder.Entity("DAL.Entities.UserSession", b =>
@@ -225,7 +225,7 @@ namespace API.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("UserSessions");
+                    b.ToTable("UserSessions", (string)null);
                 });
 
             modelBuilder.Entity("DAL.Entities.Avatar", b =>
