@@ -1,7 +1,7 @@
-﻿using API.Models.Comment;
+﻿using API.Extentions;
+using API.Models.Comment;
 using API.Services;
 using Common.Constants;
-using Common.Extentions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

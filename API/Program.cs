@@ -32,6 +32,7 @@ namespace API
             builder.Services.AddDbContext<DataContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("PostgreSQL")));
             builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
 
+            builder.Services.AddScoped<TagService>();
             builder.Services.AddScoped<UserService>();
             builder.Services.AddScoped<AuthService>();
             builder.Services.AddScoped<PostService>();

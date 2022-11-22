@@ -11,13 +11,15 @@ namespace API.Services
     public class PostService
     {
         private readonly IMapper _mapper;
+        private readonly TagService _tagService;
         private readonly DataContext _dataContext;
         private readonly AttachService _attachService;
         private readonly LinkGeneratorService _linkGeneratorService;
 
-        public PostService(IMapper mapper, DataContext dataContext, AttachService attachService, LinkGeneratorService linkGeneratorService)
+        public PostService(IMapper mapper, TagService tagService, DataContext dataContext, AttachService attachService, LinkGeneratorService linkGeneratorService)
         {
             _mapper = mapper;
+            _tagService = tagService;
             _dataContext = dataContext;
             _attachService = attachService;
             _linkGeneratorService = linkGeneratorService;
@@ -36,9 +38,11 @@ namespace API.Services
 
         public IEnumerable<PostModel> GetPersonalPosts(Guid userId, int skip, int take)
         {
-            return _dataContext.Followers
-                .Where(x => x.FollowingId == userId)
-                .SelectMany(x => x.Follewer.Posts!)
+            return _dataContext.Posts
+                .Where(x =>
+                    x.Author.Followings!.Where(f => f.FollowingId == userId).Any() ||
+                    x.Tags!.Where(t => t.Tag.UserTags!.Where(f => f.UserId == userId).Any()).Any()
+                )
                 .ProjectTo<PostModel>(_mapper.ConfigurationProvider, _linkGeneratorService)
                 .OrderByDescending(x => x.CreatedAt)
                 .Skip(skip)
@@ -63,7 +67,9 @@ namespace API.Services
         {
             Post post = _mapper.Map<Post>(createModel);
             post.AuthorId = authorId;
+            post.Tags = new List<PostTag>();
 
+            // add attaches
             if (post.Attaches != null)
             {
                 Parallel.ForEach(post.Attaches, postAttach =>
@@ -72,6 +78,10 @@ namespace API.Services
                     _attachService.SaveAttach(postAttach.Id);
                 });
             }
+
+            // add tags
+            foreach (var tag in await _tagService.ParseTags(post.Text))
+                post.Tags.Add(new PostTag() { Tag = tag });
 
             await _dataContext.AddAsync(post);
             await _dataContext.SaveChangesAsync();

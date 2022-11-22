@@ -1,7 +1,7 @@
-﻿using API.Models.Post;
+﻿using API.Extentions;
+using API.Models.Post;
 using API.Services;
 using Common.Constants;
-using Common.Extentions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

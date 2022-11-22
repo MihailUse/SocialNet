@@ -2,6 +2,7 @@ using API.MappingActions;
 using API.Models.Attach;
 using API.Models.Comment;
 using API.Models.Post;
+using API.Models.Tag;
 using API.Models.User;
 using AutoMapper;
 using Common;
@@ -67,6 +68,13 @@ namespace API.Mapper
                 .ForMember(d => d.Link, m => m.MapFrom(s => AvatarLinkGenerator == null ? null : AvatarLinkGenerator(s)));
             CreateProjection<PostAttach, LinkMetadataModel>()
                 .ForMember(d => d.Link, m => m.MapFrom(s => PostAttachLinkGenerator == null ? null : PostAttachLinkGenerator(s)));
+
+            // Tag
+            CreateProjection<Tag, SearchTagModel>()
+                .ForMember(d => d.FollowerCount, m => m.MapFrom(s => s.UserTags!.Count));
+            CreateProjection<Tag, TagInfoModel>()
+                .ForMember(d => d.PostCount, m => m.MapFrom(s => s.PostTags!.Count))
+                .ForMember(d => d.FollowerCount, m => m.MapFrom(s => s.UserTags!.Count));
             #endregion
         }
     }

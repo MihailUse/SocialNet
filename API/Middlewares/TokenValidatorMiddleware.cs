@@ -1,7 +1,7 @@
 ﻿using API.Exceptions;
+using API.Extentions;
 using API.Services;
 using Common.Constants;
-using Common.Extentions;
 using DAL.Entities;
 
 namespace API.Middlewares

@@ -17,6 +17,9 @@ namespace DAL
         public DbSet<PostLike> PostLikes => Set<PostLike>();
         public DbSet<CommentLike> CommentLikes => Set<CommentLike>();
         public DbSet<Attach> Attaches => Set<Attach>();
+        public DbSet<Tag> Tags => Set<Tag>();
+        public DbSet<UserTag> UserTags => Set<UserTag>();
+        public DbSet<PostTag> PostTags => Set<PostTag>();
 
         public DataContext(DbContextOptions<DataContext> options) : base(options) { }
 
@@ -57,11 +60,20 @@ namespace DAL
 
             modelBuilder.Entity<Follower>()
                 .HasKey(x => new { x.FollewerId, x.FollowingId });
+
+            // likes
             modelBuilder.Entity<PostLike>()
                 .HasKey(x => new { x.UserId, x.PostId });
             modelBuilder.Entity<CommentLike>()
                 .HasKey(x => new { x.UserId, x.CommentId });
 
+            // tags
+            modelBuilder.Entity<UserTag>()
+                .HasKey(x => new { x.UserId, x.TagId });
+            modelBuilder.Entity<PostTag>()
+                .HasKey(x => new { x.PostId, x.TagId });
+
+            // attaches
             modelBuilder.Entity<Avatar>().ToTable(nameof(Avatars));
             modelBuilder.Entity<PostAttach>().ToTable(nameof(PostAttaches));
         }

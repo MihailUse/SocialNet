@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 
-namespace Common.Extentions
+namespace API.Extentions
 {
     public static class UrlHelperExtention
     {

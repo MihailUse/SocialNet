@@ -1,7 +1,8 @@
 ﻿using API.Exceptions;
+using Common;
 using System.Security.Claims;
 
-namespace Common.Extentions
+namespace API.Extentions
 {
     public static class ClaimPrincipalExtention
     {

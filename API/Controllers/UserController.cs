@@ -1,10 +1,11 @@
-﻿using API.Models.Attach;
+﻿using API.Extentions;
+using API.Models.Attach;
 using API.Models.User;
 using API.Services;
 using Common.Constants;
-using Common.Extentions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.ComponentModel.DataAnnotations;
 
 namespace API.Controllers
 {
@@ -40,7 +41,7 @@ namespace API.Controllers
         }
 
         [HttpGet]
-        public IEnumerable<SearchListUserModel> SearchUsers(string search, int skip = 0, int take = 20)
+        public IEnumerable<SearchListUserModel> SearchUsers([MinLength(2)] string search, int skip = 0, int take = 20)
         {
             return _userService.SearchUsers(search, skip, take);
         }
