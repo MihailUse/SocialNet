@@ -52,6 +52,13 @@ namespace API.Controllers
             return await _userService.GetUserProfile(userId);
         }
 
+        [HttpGet]
+        public async Task<UserProfileModel> GetCurrentUserProfile()
+        {
+            Guid userId = User.GetClaimValue<Guid>(TokenClaimTypes.UserId);
+            return await _userService.GetUserProfile(userId);
+        }
+
         [HttpPost]
         [AllowAnonymous]
         public async Task<Guid> CreateUser(CreateUserModel createModel)
