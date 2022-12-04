@@ -60,13 +60,6 @@ namespace API.Controllers
         }
 
         [HttpPost]
-        [AllowAnonymous]
-        public async Task<Guid> CreateUser(CreateUserModel createModel)
-        {
-            return await _userService.CreateUser(createModel);
-        }
-
-        [HttpPost]
         public async Task SetUserAvatar(MetadataModel metadata)
         {
             Guid userId = User.GetClaimValue<Guid>(TokenClaimTypes.UserId);
