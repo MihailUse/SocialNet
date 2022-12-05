@@ -1,5 +1,6 @@
 ﻿using API.Exceptions;
 using API.Models;
+using Microsoft.IdentityModel.Tokens;
 
 namespace API.Middlewares
 {
@@ -29,6 +30,7 @@ namespace API.Middlewares
                     AuthException => new ErrorModel(e.Message, StatusCodes.Status401Unauthorized),
                     NotFoundServiceException => new ErrorModel(e.Message, StatusCodes.Status404NotFound),
                     AccessDeniedServiceException => new ErrorModel(e.Message, StatusCodes.Status403Forbidden),
+                    SecurityTokenExpiredException => new ErrorModel(e.Message, StatusCodes.Status401Unauthorized),
                     InvalidParameterServiceException => new ErrorModel(e.Message, StatusCodes.Status422UnprocessableEntity),
                     _ => new ErrorModel("Internal Server Error", StatusCodes.Status500InternalServerError)
                 };
