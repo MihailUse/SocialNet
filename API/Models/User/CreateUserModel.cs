@@ -4,7 +4,7 @@ namespace API.Models.User
 {
     public class CreateUserModel
     {
-        [EmailAddress]
+        [EmailAddress, MaxLength(64)]
         public string Email { get; set; } = null!;
 
         [MinLength(2), MaxLength(64)]

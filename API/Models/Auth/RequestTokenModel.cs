@@ -4,7 +4,7 @@ namespace API.Models.Auth
 {
     public class RequestTokenModel
     {
-        [EmailAddress]
+        [EmailAddress, MaxLength(64)]
         public string Email { get; set; } = null!;
 
         [MinLength(4), MaxLength(64)]
