@@ -47,6 +47,10 @@ namespace API.Services
         public FileStream GetStream(Guid fileId)
         {
             string filePath = Path.Combine(_attachPath, fileId.ToString());
+
+            if (!File.Exists(filePath))
+                throw new NotFoundServiceException("File file not found");
+
             return new FileStream(filePath, FileMode.Open);
         }
     }

@@ -22,9 +22,6 @@ namespace API.Middlewares
             }
             catch (Exception e)
             {
-                if (environment.IsDevelopment())
-                    throw;
-
                 ErrorModel errorModel = e switch
                 {
                     AuthException => new ErrorModel(e.Message, StatusCodes.Status401Unauthorized),
@@ -32,7 +29,7 @@ namespace API.Middlewares
                     AccessDeniedServiceException => new ErrorModel(e.Message, StatusCodes.Status403Forbidden),
                     SecurityTokenExpiredException => new ErrorModel(e.Message, StatusCodes.Status401Unauthorized),
                     InvalidParameterServiceException => new ErrorModel(e.Message, StatusCodes.Status422UnprocessableEntity),
-                    _ => new ErrorModel("Internal Server Error", StatusCodes.Status500InternalServerError)
+                    _ => new ErrorModel(environment.IsDevelopment() ? e.Message : "Internal Server Error", StatusCodes.Status500InternalServerError)
                 };
 
                 httpContext.Response.Clear();
