@@ -27,6 +27,10 @@ namespace API.Controllers
         public async Task<TokenModel> GetRefreshToken(RequestRefreshTokenModel model) => await _authService.GetTokensByRefreshToken(model.RefreshToken);
 
         [HttpPost]
-        public async Task<Guid> CreateUser(CreateUserModel createModel) => await _userService.CreateUser(createModel);
+        public async Task<TokenModel> CreateUser(CreateUserModel createModel)
+        {
+            await _userService.CreateUser(createModel);
+            return await _authService.GetToken(createModel.Email, createModel.Password);
+        }
     }
 }
