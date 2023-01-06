@@ -15,10 +15,11 @@ namespace API.Mapper
 
         public MappingProfile()
         {
-            // LinkGeneratorService должен содержать идентичные свойства
+            // ProjectionGeneratorService должен содержать идентичные свойства
             Func<Attach, string?>? AttachLinkGenerator = null;
             Func<Avatar, string?>? AvatarLinkGenerator = null;
             Func<PostAttach, string?>? PostAttachLinkGenerator = null;
+            Guid RequestUserId = Guid.Empty;
 
             #region define Maps
             // User
@@ -50,18 +51,20 @@ namespace API.Mapper
 
             // Post
             CreateProjection<Post, PostModel>()
+                .ForMember(d => d.IsLiked, m => m.MapFrom(s => s.Likes!.Any(x => x.UserId == RequestUserId)))
                 .ForMember(d => d.LikeCount, m => m.MapFrom(s => s.Likes!.Count))
                 .ForMember(d => d.CommentCount, m => m.MapFrom(s => s.Comments!.Count))
                 .ForMember(d => d.PopularComment, m => m.MapFrom(s => s.Comments!.OrderByDescending(x => x.CommentLikes!.Count).First()));
 
             // Comment
             CreateProjection<Comment, CommentModel>()
+                .ForMember(d => d.IsLiked, m => m.MapFrom(s => s.CommentLikes!.Any(x => x.UserId == RequestUserId)))
                 .ForMember(d => d.Text, m => m.MapFrom(s => s.DeletedAt.HasValue ? "Comment has been deleted" : s.Text))
                 .ForMember(d => d.LikeCount, m => m.MapFrom(s => s.CommentLikes!.Count));
 
             // Attach
             // при использовании ProjectTo(config, new { ... }), вторым аргументом следует передавать объект с идентичными свойсвами
-            // в рамках проекта следует передавать экземпл€р LinkGeneratorService
+            // в рамках проекта следует передавать экземпл€р ProjectionGeneratorService
             CreateProjection<Attach, LinkMetadataModel>()
                 .ForMember(d => d.Link, m => m.MapFrom(s => AttachLinkGenerator == null ? null : AttachLinkGenerator(s)));
             CreateProjection<Avatar, LinkMetadataModel>()

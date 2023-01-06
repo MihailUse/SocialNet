@@ -15,17 +15,18 @@ namespace API.Controllers
     {
         private readonly CommentService _commentService;
 
-        public CommentController(CommentService commentService, LinkGeneratorService linkGenerator)
+        public CommentController(CommentService commentService, ProjectionGeneratorService projectionGeneratorService)
         {
             _commentService = commentService;
 
-            linkGenerator.AvatarLinkGenerator = x => Url.ControllerAction<AttachController>(nameof(AttachController.GetUserAvatar), new { userId = x.UserId });
+            projectionGeneratorService.AvatarLinkGenerator =
+                x => Url.ControllerAction<AttachController>(nameof(AttachController.GetUserAvatar), new { userId = x.UserId });
         }
 
         [HttpGet]
-        public IEnumerable<CommentModel> GetPostComments(Guid postId, int skip = 0, int take = 20)
+        public IEnumerable<CommentModel> GetPostComments(Guid postId, int skip = 0, int take = 20, Guid? requestUserId = null)
         {
-            return _commentService.GetPostComments(postId, skip, take);
+            return _commentService.GetPostComments(postId, skip, take, requestUserId ?? Guid.Empty);
         }
 
         [HttpPost]
@@ -36,10 +37,10 @@ namespace API.Controllers
         }
 
         [HttpPost]
-        public async Task ChangeLikeStatus(Guid commentId)
+        public async Task<bool> ChangeLikeStatus(Guid commentId)
         {
             Guid userId = User.GetClaimValue<Guid>(TokenClaimTypes.UserId);
-            await _commentService.ChangeLikeStatus(userId, commentId);
+            return await _commentService.ChangeLikeStatus(userId, commentId);
         }
 
         [HttpDelete]

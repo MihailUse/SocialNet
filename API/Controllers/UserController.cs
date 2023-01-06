@@ -17,12 +17,14 @@ namespace API.Controllers
     {
         private readonly UserService _userService;
 
-        public UserController(UserService userService, LinkGeneratorService linkGenerator)
+        public UserController(UserService userService, ProjectionGeneratorService projectionGeneratorService)
         {
             _userService = userService;
 
-            linkGenerator.AvatarLinkGenerator = x => Url.ControllerAction<AttachController>(nameof(AttachController.GetUserAvatar), new { userId = x.UserId });
-            linkGenerator.AttachLinkGenerator = x => Url.ControllerAction<AttachController>(nameof(AttachController.GetUserAttach), new { attachId = x.Id });
+            projectionGeneratorService.AvatarLinkGenerator =
+                x => Url.ControllerAction<AttachController>(nameof(AttachController.GetUserAvatar), new { userId = x.UserId });
+            projectionGeneratorService.AttachLinkGenerator =
+                x => Url.ControllerAction<AttachController>(nameof(AttachController.GetUserAttach), new { attachId = x.Id });
         }
 
         // for testing

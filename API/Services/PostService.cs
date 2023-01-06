@@ -14,21 +14,22 @@ namespace API.Services
         private readonly TagService _tagService;
         private readonly DataContext _dataContext;
         private readonly AttachService _attachService;
-        private readonly LinkGeneratorService _linkGeneratorService;
+        private readonly ProjectionGeneratorService _projectionGeneratorService;
 
-        public PostService(IMapper mapper, TagService tagService, DataContext dataContext, AttachService attachService, LinkGeneratorService linkGeneratorService)
+        public PostService(IMapper mapper, TagService tagService, DataContext dataContext, AttachService attachService, ProjectionGeneratorService projectionGeneratorService)
         {
             _mapper = mapper;
             _tagService = tagService;
             _dataContext = dataContext;
             _attachService = attachService;
-            _linkGeneratorService = linkGeneratorService;
+            _projectionGeneratorService = projectionGeneratorService;
         }
 
-        public IEnumerable<PostModel> GetPosts(int skip, int take)
+        public IEnumerable<PostModel> GetPosts(int skip, int take, Guid requestUserId)
         {
+            _projectionGeneratorService.RequestUserId = requestUserId;
             return _dataContext.Posts
-                .ProjectTo<PostModel>(_mapper.ConfigurationProvider, _linkGeneratorService)
+                .ProjectTo<PostModel>(_mapper.ConfigurationProvider, _projectionGeneratorService)
                 .OrderByDescending(x => x.CreatedAt)
                 .Skip(skip)
                 .Take(take)
@@ -36,14 +37,15 @@ namespace API.Services
                 .AsEnumerable();
         }
 
-        public IEnumerable<PostModel> GetPersonalPosts(Guid userId, int skip, int take)
+        public IEnumerable<PostModel> GetPersonalPosts(Guid userId, int skip, int take, Guid requestUserId)
         {
+            _projectionGeneratorService.RequestUserId = requestUserId;
             return _dataContext.Posts
                 .Where(x =>
                     x.Author.Followings!.Where(f => f.FollowingId == userId).Any() ||
                     x.Tags!.Where(t => t.Tag.UserTags!.Where(f => f.UserId == userId).Any()).Any()
                 )
-                .ProjectTo<PostModel>(_mapper.ConfigurationProvider, _linkGeneratorService)
+                .ProjectTo<PostModel>(_mapper.ConfigurationProvider, _projectionGeneratorService)
                 .OrderByDescending(x => x.CreatedAt)
                 .Skip(skip)
                 .Take(take)
@@ -51,11 +53,12 @@ namespace API.Services
                 .AsEnumerable();
         }
 
-        public IEnumerable<PostModel> GetUserPosts(Guid userId, int skip, int take)
+        public IEnumerable<PostModel> GetUserPosts(Guid userId, int skip, int take, Guid requestUserId)
         {
+            _projectionGeneratorService.RequestUserId = requestUserId;
             return _dataContext.Posts
                 .Where(x => x.Author.Id == userId)
-                .ProjectTo<PostModel>(_mapper.ConfigurationProvider, _linkGeneratorService)
+                .ProjectTo<PostModel>(_mapper.ConfigurationProvider, _projectionGeneratorService)
                 .OrderByDescending(x => x.CreatedAt)
                 .Skip(skip)
                 .Take(take)
@@ -120,7 +123,7 @@ namespace API.Services
             return postFile;
         }
 
-        public async Task ChangeLikeStatus(Guid userId, Guid postId)
+        public async Task<bool> ChangeLikeStatus(Guid userId, Guid postId)
         {
             if (!await CheckPostExists(postId))
                 throw new NotFoundServiceException("Post not found");
@@ -134,6 +137,7 @@ namespace API.Services
                 _dataContext.PostLikes.Remove(postLike);
 
             await _dataContext.SaveChangesAsync();
+            return postLike == null;
         }
 
         private async Task<bool> CheckPostExists(Guid postId)

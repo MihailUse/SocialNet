@@ -12,6 +12,7 @@ namespace API.Models.Post
         public bool IsCommentable { get; set; } = true;
         public int LikeCount { get; set; }
         public int CommentCount { get; set; }
+        public bool IsLiked { get; set; }
         public CommentModel? PopularComment { get; set; }
 
         public UserModel Author { get; set; } = null!;

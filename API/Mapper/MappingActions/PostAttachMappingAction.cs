@@ -7,9 +7,9 @@ namespace API.Mapper.MappingActions
 {
     public class PostAttachMappingAction : IMappingAction<PostAttach, LinkMetadataModel>
     {
-        private readonly LinkGeneratorService _urlService;
+        private readonly ProjectionGeneratorService _urlService;
 
-        public PostAttachMappingAction(LinkGeneratorService urlService)
+        public PostAttachMappingAction(ProjectionGeneratorService urlService)
         {
             _urlService = urlService;
         }

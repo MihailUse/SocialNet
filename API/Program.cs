@@ -37,13 +37,13 @@ namespace API
             builder.Services.AddScoped<AuthService>();
             builder.Services.AddScoped<PostService>();
             builder.Services.AddScoped<CommentService>();
-            builder.Services.AddScoped<LinkGeneratorService>();
+            builder.Services.AddScoped<ProjectionGeneratorService>();
             builder.Services.AddSingleton<AttachService>();
 
             builder.Services.AddAuthentication(defaultScheme: JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(o =>
                 {
-                    o.RequireHttpsMetadata = builder.Environment.IsProduction();
+                    o.RequireHttpsMetadata = false;
                     o.TokenValidationParameters = new TokenValidationParameters()
                     {
                         ClockSkew = TimeSpan.Zero,
@@ -80,7 +80,7 @@ namespace API
 
             app.UseSwagger();
             app.UseSwaggerUI(SetupSwaggerUiAction);
-            app.UseHttpsRedirection();
+            //app.UseHttpsRedirection();
             app.UseAuthentication();
             app.UseAuthorization();
 

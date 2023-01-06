@@ -15,14 +15,14 @@ namespace API.Services
         private readonly IMapper _mapper;
         private readonly DataContext _dataContext;
         private readonly AttachService _attachService;
-        private readonly LinkGeneratorService _linkGeneratorService;
+        private readonly ProjectionGeneratorService _projectionGeneratorService;
 
-        public UserService(IMapper mapper, DataContext context, AttachService attachService, LinkGeneratorService linkGeneratorService)
+        public UserService(IMapper mapper, DataContext context, AttachService attachService, ProjectionGeneratorService projectionGeneratorService)
         {
             _mapper = mapper;
             _dataContext = context;
             _attachService = attachService;
-            _linkGeneratorService = linkGeneratorService;
+            _projectionGeneratorService = projectionGeneratorService;
         }
 
         // for testing
@@ -30,7 +30,7 @@ namespace API.Services
         {
             return _dataContext.Users
                 .Include(x => x.Avatar)
-                .ProjectTo<UserModel>(_mapper.ConfigurationProvider, _linkGeneratorService)
+                .ProjectTo<UserModel>(_mapper.ConfigurationProvider, _projectionGeneratorService)
                 .IgnoreQueryFilters()
                 .AsNoTracking()
                 .AsEnumerable();
@@ -40,7 +40,7 @@ namespace API.Services
         {
             return _dataContext.Attaches
                 .Where(x => x.AuthorId == userId)
-                .ProjectTo<LinkMetadataModel>(_mapper.ConfigurationProvider, _linkGeneratorService)
+                .ProjectTo<LinkMetadataModel>(_mapper.ConfigurationProvider, _projectionGeneratorService)
                 .AsNoTracking()
                 .AsEnumerable();
         }
@@ -50,7 +50,7 @@ namespace API.Services
             return _dataContext.Users
                 .Include(x => x.Avatar)
                 .Where(x => EF.Functions.ILike(x.Nickname, $"%{search}%") || EF.Functions.ILike(x.FullName!, $"%{search}%"))
-                .ProjectTo<SearchListUserModel>(_mapper.ConfigurationProvider, _linkGeneratorService)
+                .ProjectTo<SearchListUserModel>(_mapper.ConfigurationProvider, _projectionGeneratorService)
                 .OrderByDescending(x => x.FollowerCount)
                 .Skip(skip)
                 .Take(take)
@@ -63,7 +63,7 @@ namespace API.Services
             UserProfileModel? user = await _dataContext.Users
                 .Include(x => x.Avatar)
                 .Where(x => x.Id == userId)
-                .ProjectTo<UserProfileModel>(_mapper.ConfigurationProvider, _linkGeneratorService)
+                .ProjectTo<UserProfileModel>(_mapper.ConfigurationProvider, _projectionGeneratorService)
                 .OrderByDescending(x => x.FollowerCount)
                 .IgnoreQueryFilters()
                 .FirstOrDefaultAsync();

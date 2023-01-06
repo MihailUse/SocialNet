@@ -15,32 +15,36 @@ namespace API.Controllers
     {
         private readonly PostService _postService;
 
-        public PostController(PostService postService, LinkGeneratorService linkGenerator)
+        public PostController(PostService postService, ProjectionGeneratorService projectionGeneratorService)
         {
             _postService = postService;
 
-            linkGenerator.PostAttachLinkGenerator = x => Url.ControllerAction<AttachController>(nameof(AttachController.GetPostAttach), new { postId = x.PostId, attachId = x.Id });
-            linkGenerator.AvatarLinkGenerator = x => Url.ControllerAction<AttachController>(nameof(AttachController.GetUserAvatar), new { userId = x.UserId });
+            projectionGeneratorService.PostAttachLinkGenerator =
+                x => Url.ControllerAction<AttachController>(nameof(AttachController.GetPostAttach), new { postId = x.PostId, attachId = x.Id });
+            projectionGeneratorService.AvatarLinkGenerator =
+                x => Url.ControllerAction<AttachController>(nameof(AttachController.GetUserAvatar), new { userId = x.UserId });
         }
 
         // for testing
         [HttpGet]
-        public IEnumerable<PostModel> GetPosts(int skip = 0, int take = 20)
+        [AllowAnonymous]
+        public IEnumerable<PostModel> GetPosts(int skip = 0, int take = 20, Guid? requestUserId = null)
         {
-            return _postService.GetPosts(skip, take);
+            return _postService.GetPosts(skip, take, requestUserId ?? Guid.Empty);
         }
 
         [HttpGet]
         public IEnumerable<PostModel> GetPersonalPosts(int skip = 0, int take = 20)
         {
             Guid userId = User.GetClaimValue<Guid>(TokenClaimTypes.UserId);
-            return _postService.GetPersonalPosts(userId, skip, take);
+            return _postService.GetPersonalPosts(userId, skip, take, userId);
         }
 
         [HttpGet]
         public IEnumerable<PostModel> GetUserPosts(Guid userId, int skip = 0, int take = 20)
         {
-            return _postService.GetUserPosts(userId, skip, take);
+            Guid requestUserId = User.GetClaimValue<Guid>(TokenClaimTypes.UserId);
+            return _postService.GetUserPosts(userId, skip, take, requestUserId);
         }
 
         [HttpPost]
@@ -51,10 +55,10 @@ namespace API.Controllers
         }
 
         [HttpPost]
-        public async Task ChangeLikeStatus(Guid postId)
+        public async Task<bool> ChangeLikeStatus(Guid postId)
         {
             Guid userId = User.GetClaimValue<Guid>(TokenClaimTypes.UserId);
-            await _postService.ChangeLikeStatus(userId, postId);
+            return await _postService.ChangeLikeStatus(userId, postId);
         }
 
         [HttpDelete]

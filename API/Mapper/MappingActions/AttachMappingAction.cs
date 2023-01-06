@@ -7,9 +7,9 @@ namespace API.MappingActions
 {
     public class AvatarAttachMappingAction : IMappingAction<Avatar, LinkMetadataModel>
     {
-        private readonly LinkGeneratorService _urlService;
+        private readonly ProjectionGeneratorService _urlService;
 
-        public AvatarAttachMappingAction(LinkGeneratorService urlService)
+        public AvatarAttachMappingAction(ProjectionGeneratorService urlService)
         {
             _urlService = urlService;
         }

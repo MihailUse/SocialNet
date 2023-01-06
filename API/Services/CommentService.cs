@@ -13,22 +13,23 @@ namespace API.Services
         private readonly IMapper _mapper;
         private readonly DataContext _dataContext;
         private readonly PostService _postService;
-        private readonly LinkGeneratorService _linkGeneratorService;
+        private readonly ProjectionGeneratorService _projectionGeneratorService;
 
-        public CommentService(IMapper mapper, DataContext dataContext, PostService postService, LinkGeneratorService linkGeneratorService)
+        public CommentService(IMapper mapper, DataContext dataContext, PostService postService, ProjectionGeneratorService projectionGeneratorService)
         {
             _mapper = mapper;
             _dataContext = dataContext;
             _postService = postService;
-            _linkGeneratorService = linkGeneratorService;
+            _projectionGeneratorService = projectionGeneratorService;
         }
 
-        public IEnumerable<CommentModel> GetPostComments(Guid postId, int skip, int take)
+        public IEnumerable<CommentModel> GetPostComments(Guid postId, int skip, int take, Guid requestUserId)
         {
+            _projectionGeneratorService.RequestUserId = requestUserId;
             return _dataContext.Comments
                 .Where(x => x.PostId == postId)
                 .IgnoreQueryFilters()
-                .ProjectTo<CommentModel>(_mapper.ConfigurationProvider, _linkGeneratorService)
+                .ProjectTo<CommentModel>(_mapper.ConfigurationProvider, _projectionGeneratorService)
                 .OrderByDescending(x => x.CreatedAt)
                 .Skip(skip)
                 .Take(take)
@@ -61,7 +62,7 @@ namespace API.Services
             await _dataContext.SaveChangesAsync();
         }
 
-        public async Task ChangeLikeStatus(Guid userId, Guid commentId)
+        public async Task<bool> ChangeLikeStatus(Guid userId, Guid commentId)
         {
             if (!await CheckCommentExists(commentId))
                 throw new NotFoundServiceException("Comment not found");
@@ -75,6 +76,7 @@ namespace API.Services
                 _dataContext.CommentLikes.Remove(commentLike);
 
             await _dataContext.SaveChangesAsync();
+            return commentLike == null;
         }
 
         private async Task<bool> CheckCommentExists(Guid commentId)
