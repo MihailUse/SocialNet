@@ -25,9 +25,8 @@ namespace API.Services
             _projectionGeneratorService = projectionGeneratorService;
         }
 
-        public IEnumerable<PostModel> GetPosts(int skip, int take, Guid requestUserId)
+        public IEnumerable<PostModel> GetPosts(int skip, int take)
         {
-            _projectionGeneratorService.RequestUserId = requestUserId;
             return _dataContext.Posts
                 .ProjectTo<PostModel>(_mapper.ConfigurationProvider, _projectionGeneratorService)
                 .OrderByDescending(x => x.CreatedAt)
@@ -37,9 +36,8 @@ namespace API.Services
                 .AsEnumerable();
         }
 
-        public IEnumerable<PostModel> GetPersonalPosts(Guid userId, int skip, int take, Guid requestUserId)
+        public IEnumerable<PostModel> GetPersonalPosts(Guid userId, int skip, int take)
         {
-            _projectionGeneratorService.RequestUserId = requestUserId;
             return _dataContext.Posts
                 .Where(x =>
                     x.Author.Followings!.Where(f => f.FollowingId == userId).Any() ||
@@ -53,9 +51,8 @@ namespace API.Services
                 .AsEnumerable();
         }
 
-        public IEnumerable<PostModel> GetUserPosts(Guid userId, int skip, int take, Guid requestUserId)
+        public IEnumerable<PostModel> GetUserPosts(Guid userId, int skip, int take)
         {
-            _projectionGeneratorService.RequestUserId = requestUserId;
             return _dataContext.Posts
                 .Where(x => x.Author.Id == userId)
                 .ProjectTo<PostModel>(_mapper.ConfigurationProvider, _projectionGeneratorService)
@@ -99,6 +96,18 @@ namespace API.Services
                 throw new NotFoundServiceException("Post not found");
 
             return post;
+        }
+
+        public IEnumerable<PostModel> GetPostsByTag(Guid tagId, int skip, int take)
+        {
+            return _dataContext.Posts
+                .Where(x => x.Tags!.Any(t => t.TagId == tagId))
+                .ProjectTo<PostModel>(_mapper.ConfigurationProvider, _projectionGeneratorService)
+                .OrderByDescending(x => x.CreatedAt)
+                .Skip(skip)
+                .Take(take)
+                .AsNoTracking()
+                .AsEnumerable();
         }
 
         public async Task DeletePost(Guid userId, Guid postId)

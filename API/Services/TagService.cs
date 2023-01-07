@@ -13,18 +13,34 @@ namespace API.Services
     {
         private readonly IMapper _mapper;
         private readonly DataContext _dataContext;
+        private readonly ProjectionGeneratorService _projectionGeneratorService;
 
-        public TagService(IMapper mapper, DataContext dataContext)
+        public TagService(IMapper mapper, DataContext dataContext, ProjectionGeneratorService projectionGeneratorService)
         {
             _mapper = mapper;
             _dataContext = dataContext;
+            _projectionGeneratorService = projectionGeneratorService;
         }
 
-        public async Task<TagInfoModel> GetTagInfoModel(Guid tagId)
+        public IEnumerable<TagModel> SearchTags(string search, int skip, int take)
         {
-            TagInfoModel? tag = await _dataContext.Tags
-                .ProjectTo<TagInfoModel>(_mapper.ConfigurationProvider)
-                .FirstOrDefaultAsync(x => x.Id == tagId);
+            return _dataContext.Tags
+                .Where(x => EF.Functions.ILike(x.Name, $"{search}%"))
+                .ProjectTo<TagModel>(_mapper.ConfigurationProvider, _projectionGeneratorService)
+                .OrderByDescending(x => x.FollowerCount)
+                .Skip(skip)
+                .Take(take)
+                .AsNoTracking()
+                .AsEnumerable();
+        }
+
+        public async Task<TagModel> GetTagById(Guid tagId)
+        {
+            TagModel? tag = await _dataContext.Tags
+                .Where(x => x.Id == tagId)
+                .ProjectTo<TagModel>(_mapper.ConfigurationProvider, _projectionGeneratorService)
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync();
 
             if (tag == null)
                 throw new NotFoundServiceException("Tag not found");
@@ -32,18 +48,7 @@ namespace API.Services
             return tag;
         }
 
-        public IEnumerable<SearchTagModel> SearchTags(string search, int take)
-        {
-            return _dataContext.Tags
-                .Where(x => EF.Functions.ILike(x.Name, $"{search}%"))
-                .ProjectTo<SearchTagModel>(_mapper.ConfigurationProvider)
-                .OrderByDescending(x => x.FollowerCount)
-                .Take(take)
-                .AsNoTracking()
-                .AsEnumerable();
-        }
-
-        public async Task ChangeFollowStatus(Guid userId, Guid tagId)
+        public async Task<bool> ChangeFollowStatus(Guid userId, Guid tagId)
         {
             UserTag? tag = await _dataContext.UserTags
                 .FirstOrDefaultAsync(x => x.UserId == userId && x.TagId == tagId);
@@ -54,6 +59,7 @@ namespace API.Services
                 _dataContext.UserTags.Remove(tag);
 
             await _dataContext.SaveChangesAsync();
+            return tag == null;
         }
 
         public async Task<List<Tag>> ParseTags(string text)

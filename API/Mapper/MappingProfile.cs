@@ -73,9 +73,8 @@ namespace API.Mapper
                 .ForMember(d => d.Link, m => m.MapFrom(s => PostAttachLinkGenerator == null ? null : PostAttachLinkGenerator(s)));
 
             // Tag
-            CreateProjection<Tag, SearchTagModel>()
-                .ForMember(d => d.FollowerCount, m => m.MapFrom(s => s.UserTags!.Count));
-            CreateProjection<Tag, TagInfoModel>()
+            CreateProjection<Tag, TagModel>()
+                .ForMember(d => d.IsFollowed, m => m.MapFrom(s => s.UserTags!.Any(x => x.UserId == RequestUserId)))
                 .ForMember(d => d.PostCount, m => m.MapFrom(s => s.PostTags!.Count))
                 .ForMember(d => d.FollowerCount, m => m.MapFrom(s => s.UserTags!.Count));
             #endregion

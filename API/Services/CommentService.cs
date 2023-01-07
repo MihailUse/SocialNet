@@ -23,9 +23,8 @@ namespace API.Services
             _projectionGeneratorService = projectionGeneratorService;
         }
 
-        public IEnumerable<CommentModel> GetPostComments(Guid postId, int skip, int take, Guid requestUserId)
+        public IEnumerable<CommentModel> GetPostComments(Guid postId, int skip, int take)
         {
-            _projectionGeneratorService.RequestUserId = requestUserId;
             return _dataContext.Comments
                 .Where(x => x.PostId == postId)
                 .IgnoreQueryFilters()

@@ -14,19 +14,22 @@ namespace API.Controllers
     public class CommentController : ControllerBase
     {
         private readonly CommentService _commentService;
+        private readonly ProjectionGeneratorService _projectionGeneratorService;
 
         public CommentController(CommentService commentService, ProjectionGeneratorService projectionGeneratorService)
         {
             _commentService = commentService;
+            _projectionGeneratorService = projectionGeneratorService;
 
-            projectionGeneratorService.AvatarLinkGenerator =
+            _projectionGeneratorService.AvatarLinkGenerator =
                 x => Url.ControllerAction<AttachController>(nameof(AttachController.GetUserAvatar), new { userId = x.UserId });
         }
 
         [HttpGet]
         public IEnumerable<CommentModel> GetPostComments(Guid postId, int skip = 0, int take = 20, Guid? requestUserId = null)
         {
-            return _commentService.GetPostComments(postId, skip, take, requestUserId ?? Guid.Empty);
+            _projectionGeneratorService.RequestUserId = requestUserId ?? Guid.Empty;
+            return _commentService.GetPostComments(postId, skip, take);
         }
 
         [HttpPost]

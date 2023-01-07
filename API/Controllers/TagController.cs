@@ -4,7 +4,6 @@ using API.Services;
 using Common.Constants;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.ComponentModel.DataAnnotations;
 
 namespace API.Controllers
 {
@@ -15,29 +14,33 @@ namespace API.Controllers
     public class TagController : ControllerBase
     {
         private readonly TagService _tagService;
+        private readonly ProjectionGeneratorService _projectionGeneratorService;
 
-        public TagController(TagService tagService)
+        public TagController(TagService tagService, ProjectionGeneratorService projectionGeneratorService)
         {
             _tagService = tagService;
+            _projectionGeneratorService = projectionGeneratorService;
         }
 
         [HttpGet]
-        public IEnumerable<SearchTagModel> SearchTags([MinLength(2)] string search, int take = 10)
+        public IEnumerable<TagModel> SearchTags(string? search, int skip = 0, int take = 20)
         {
-            return _tagService.SearchTags(search, take);
+            _projectionGeneratorService.RequestUserId = User.GetClaimValue<Guid>(TokenClaimTypes.UserId);
+            return _tagService.SearchTags(search ?? string.Empty, skip, take);
         }
 
         [HttpGet]
-        public Task<TagInfoModel> GetTagInfoModel(Guid tagId)
+        public Task<TagModel> GetTagById(Guid tagId)
         {
-            return _tagService.GetTagInfoModel(tagId);
+            _projectionGeneratorService.RequestUserId = User.GetClaimValue<Guid>(TokenClaimTypes.UserId);
+            return _tagService.GetTagById(tagId);
         }
 
         [HttpPost]
-        public async Task ChangeFollowStatus(Guid tagId)
+        public async Task<bool> ChangeFollowStatus(Guid tagId)
         {
             Guid userId = User.GetClaimValue<Guid>(TokenClaimTypes.UserId);
-            await _tagService.ChangeFollowStatus(userId, tagId);
+            return await _tagService.ChangeFollowStatus(userId, tagId);
         }
     }
 }

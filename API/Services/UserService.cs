@@ -64,7 +64,6 @@ namespace API.Services
                 .Include(x => x.Avatar)
                 .Where(x => x.Id == userId)
                 .ProjectTo<UserProfileModel>(_mapper.ConfigurationProvider, _projectionGeneratorService)
-                .OrderByDescending(x => x.FollowerCount)
                 .IgnoreQueryFilters()
                 .FirstOrDefaultAsync();
 

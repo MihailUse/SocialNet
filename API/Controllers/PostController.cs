@@ -14,14 +14,16 @@ namespace API.Controllers
     public class PostController : ControllerBase
     {
         private readonly PostService _postService;
+        private readonly ProjectionGeneratorService _projectionGeneratorService;
 
         public PostController(PostService postService, ProjectionGeneratorService projectionGeneratorService)
         {
             _postService = postService;
+            _projectionGeneratorService = projectionGeneratorService;
 
-            projectionGeneratorService.PostAttachLinkGenerator =
+            _projectionGeneratorService.PostAttachLinkGenerator =
                 x => Url.ControllerAction<AttachController>(nameof(AttachController.GetPostAttach), new { postId = x.PostId, attachId = x.Id });
-            projectionGeneratorService.AvatarLinkGenerator =
+            _projectionGeneratorService.AvatarLinkGenerator =
                 x => Url.ControllerAction<AttachController>(nameof(AttachController.GetUserAvatar), new { userId = x.UserId });
         }
 
@@ -30,21 +32,30 @@ namespace API.Controllers
         [AllowAnonymous]
         public IEnumerable<PostModel> GetPosts(int skip = 0, int take = 20, Guid? requestUserId = null)
         {
-            return _postService.GetPosts(skip, take, requestUserId ?? Guid.Empty);
+            _projectionGeneratorService.RequestUserId = requestUserId ?? Guid.Empty;
+            return _postService.GetPosts(skip, take);
         }
 
         [HttpGet]
         public IEnumerable<PostModel> GetPersonalPosts(int skip = 0, int take = 20)
         {
             Guid userId = User.GetClaimValue<Guid>(TokenClaimTypes.UserId);
-            return _postService.GetPersonalPosts(userId, skip, take, userId);
+            _projectionGeneratorService.RequestUserId = userId;
+            return _postService.GetPersonalPosts(userId, skip, take);
         }
 
         [HttpGet]
         public IEnumerable<PostModel> GetUserPosts(Guid userId, int skip = 0, int take = 20)
         {
-            Guid requestUserId = User.GetClaimValue<Guid>(TokenClaimTypes.UserId);
-            return _postService.GetUserPosts(userId, skip, take, requestUserId);
+            _projectionGeneratorService.RequestUserId = User.GetClaimValue<Guid>(TokenClaimTypes.UserId);
+            return _postService.GetUserPosts(userId, skip, take);
+        }
+
+        [HttpGet]
+        public IEnumerable<PostModel> GetPostsByTag(Guid tagId, int skip = 0, int take = 20)
+        {
+            _projectionGeneratorService.RequestUserId = User.GetClaimValue<Guid>(TokenClaimTypes.UserId);
+            return _postService.GetPostsByTag(tagId, skip, take);
         }
 
         [HttpPost]
