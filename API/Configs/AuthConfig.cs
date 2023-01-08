@@ -5,7 +5,7 @@ namespace API.Configs
 {
     public class AuthConfig
     {
-        public const string Position = "Auth";
+        public const string Position = nameof(AuthConfig);
         public string Key { get; set; } = null!;
         public string Issuer { get; set; } = null!;
         public string Audience { get; set; } = null!;

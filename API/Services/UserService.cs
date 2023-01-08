@@ -173,6 +173,19 @@ namespace API.Services
             await _dataContext.SaveChangesAsync();
         }
 
+        public async Task SetNotificationToken(Guid userId, string? token)
+        {
+            User user = await GetUserById(userId);
+            user.NotificationToken = token;
+            await _dataContext.SaveChangesAsync();
+        }
+
+        public async Task<string?> GetNotificationToken(Guid userId)
+        {
+            User user = await GetUserById(userId);
+            return user.NotificationToken;
+        }
+
         private async Task<bool> CheckNicknameExists(string nickname)
         {
             return await _dataContext.Users.AnyAsync(x => x.Nickname == nickname);

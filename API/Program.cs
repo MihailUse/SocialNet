@@ -21,6 +21,7 @@ namespace API
 
             // get configs
             IConfigurationSection authSection = builder.Configuration.GetSection(AuthConfig.Position);
+            IConfigurationSection notificationConfigSection = builder.Configuration.GetSection(NotificationConfig.Position);
             AuthConfig? authConfig = authSection.Get<AuthConfig>();
 
             // Add services to the container.
@@ -29,6 +30,7 @@ namespace API
             builder.Services.AddSwaggerGen(SetupSwaggerAction);
 
             builder.Services.Configure<AuthConfig>(authSection);
+            builder.Services.Configure<NotificationConfig>(notificationConfigSection);
             builder.Services.AddDbContext<DataContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("PostgreSQL")));
             builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
 
@@ -37,6 +39,7 @@ namespace API
             builder.Services.AddScoped<AuthService>();
             builder.Services.AddScoped<PostService>();
             builder.Services.AddScoped<CommentService>();
+            builder.Services.AddScoped<NotificationService>();
             builder.Services.AddScoped<ProjectionGeneratorService>();
             builder.Services.AddSingleton<AttachService>();
 

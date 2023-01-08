@@ -12,6 +12,7 @@ namespace DAL.Entities
         public string PasswordHash { get; set; } = null!;
         public string? FullName { get; set; }
         public string? About { get; set; }
+        public string? NotificationToken { get; set; }
 
         public virtual Avatar? Avatar { get; set; }
 
