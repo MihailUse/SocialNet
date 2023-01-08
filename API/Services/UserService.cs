@@ -143,7 +143,7 @@ namespace API.Services
             return user;
         }
 
-        public async Task ChangeFollowStatus(Guid followerId, Guid followingId)
+        public async Task<bool> ChangeFollowStatus(Guid followerId, Guid followingId)
         {
             if (followerId == followingId)
                 throw new InvalidParameterServiceException("User can not to subscribe to yourself");
@@ -158,6 +158,7 @@ namespace API.Services
                 _dataContext.Followers.Remove(follower);
 
             await _dataContext.SaveChangesAsync();
+            return follower == null;
         }
 
         public async Task SetUserAvatar(Guid userId, MetadataModel metadata)

@@ -15,14 +15,16 @@ namespace API.Controllers
     public class UserController : ControllerBase
     {
         private readonly UserService _userService;
+        private readonly ProjectionGeneratorService _projectionGeneratorService;
 
         public UserController(UserService userService, ProjectionGeneratorService projectionGeneratorService)
         {
             _userService = userService;
+            _projectionGeneratorService = projectionGeneratorService;
 
-            projectionGeneratorService.AvatarLinkGenerator =
+            _projectionGeneratorService.AvatarLinkGenerator =
                 x => Url.ControllerAction<AttachController>(nameof(AttachController.GetUserAvatar), new { userId = x.UserId });
-            projectionGeneratorService.AttachLinkGenerator =
+            _projectionGeneratorService.AttachLinkGenerator =
                 x => Url.ControllerAction<AttachController>(nameof(AttachController.GetUserAttach), new { attachId = x.Id });
         }
 
@@ -51,6 +53,7 @@ namespace API.Controllers
         [HttpGet]
         public async Task<UserProfileModel> GetUserProfile(Guid userId)
         {
+            _projectionGeneratorService.RequestUserId = User.GetClaimValue<Guid>(TokenClaimTypes.UserId);
             return await _userService.GetUserProfile(userId);
         }
 
@@ -69,10 +72,10 @@ namespace API.Controllers
         }
 
         [HttpPost]
-        public async Task ChangeFollowStatus(Guid followingId)
+        public async Task<bool> ChangeFollowStatus(Guid followingId)
         {
             Guid followerId = User.GetClaimValue<Guid>(TokenClaimTypes.UserId);
-            await _userService.ChangeFollowStatus(followerId, followingId);
+            return await _userService.ChangeFollowStatus(followerId, followingId);
         }
 
         [HttpPatch]

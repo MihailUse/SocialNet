@@ -41,7 +41,8 @@ namespace API.Services
             return _dataContext.Posts
                 .Where(x =>
                     x.Author.Followings!.Where(f => f.FollowingId == userId).Any() ||
-                    x.Tags!.Where(t => t.Tag.UserTags!.Where(f => f.UserId == userId).Any()).Any()
+                    x.Tags!.Where(t => t.Tag.UserTags!.Where(f => f.UserId == userId).Any()).Any() ||
+                    x.AuthorId == userId
                 )
                 .ProjectTo<PostModel>(_mapper.ConfigurationProvider, _projectionGeneratorService)
                 .OrderByDescending(x => x.CreatedAt)

@@ -45,6 +45,7 @@ namespace API.Mapper
             CreateProjection<User, SearchListUserModel>()
                 .ForMember(d => d.FollowerCount, m => m.MapFrom(s => s.Followers!.Count));
             CreateProjection<User, UserProfileModel>()
+                .ForMember(d => d.IsFollowing, m => m.MapFrom(s => s.Followers!.Any(x => x.FollewerId == RequestUserId)))
                 .ForMember(d => d.PostCount, m => m.MapFrom(s => s.Posts!.Count))
                 .ForMember(d => d.FollowerCount, m => m.MapFrom(s => s.Followers!.Count))
                 .ForMember(d => d.FollowingCount, m => m.MapFrom(s => s.Followings!.Count));
