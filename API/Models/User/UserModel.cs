@@ -7,7 +7,8 @@ namespace API.Models.User
     {
         public Guid Id { get; set; }
         public string Nickname { get; set; } = null!;
-        public string? FullName { get; set; } = null!;
+        public string? FullName { get; set; }
+        public string? AvatarLink { get; set; }
 
         public LinkMetadataModel? Avatar { get; set; }
     }

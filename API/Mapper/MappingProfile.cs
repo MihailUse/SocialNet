@@ -17,13 +17,14 @@ namespace API.Mapper
         {
             // ProjectionGeneratorService должен содержать идентичные свойства
             Func<Attach, string?>? AttachLinkGenerator = null;
-            Func<Avatar, string?>? AvatarLinkGenerator = null;
+            Func<User, string?>? AvatarLinkGenerator = null;
             Func<PostAttach, string?>? PostAttachLinkGenerator = null;
             Guid RequestUserId = Guid.Empty;
 
             #region define Maps
             // User
-            CreateMap<User, UserModel>();
+            CreateMap<User, UserModel>()
+                .ForMember(d => d.AvatarLink, m => m.MapFrom(s => AvatarLinkGenerator == null ? null : AvatarLinkGenerator(s)));
             CreateMap<CreateUserModel, User>()
                 .ForMember(d => d.PasswordHash, m => m.MapFrom(s => HashHelper.GetHash(s.Password)));
 
@@ -43,8 +44,10 @@ namespace API.Mapper
             #region define Projections
             // User
             CreateProjection<User, SearchListUserModel>()
-                .ForMember(d => d.FollowerCount, m => m.MapFrom(s => s.Followers!.Count));
+                .ForMember(d => d.FollowerCount, m => m.MapFrom(s => s.Followers!.Count))
+                .ForMember(d => d.AvatarLink, m => m.MapFrom(s => AvatarLinkGenerator == null ? null : AvatarLinkGenerator(s)));
             CreateProjection<User, UserProfileModel>()
+                .ForMember(d => d.AvatarLink, m => m.MapFrom(s => AvatarLinkGenerator == null ? null : AvatarLinkGenerator(s)))
                 .ForMember(d => d.IsFollowing, m => m.MapFrom(s => s.Followers!.Any(x => x.FollewerId == RequestUserId)))
                 .ForMember(d => d.PostCount, m => m.MapFrom(s => s.Posts!.Count))
                 .ForMember(d => d.FollowerCount, m => m.MapFrom(s => s.Followers!.Count))
@@ -69,7 +72,7 @@ namespace API.Mapper
             CreateProjection<Attach, LinkMetadataModel>()
                 .ForMember(d => d.Link, m => m.MapFrom(s => AttachLinkGenerator == null ? null : AttachLinkGenerator(s)));
             CreateProjection<Avatar, LinkMetadataModel>()
-                .ForMember(d => d.Link, m => m.MapFrom(s => AvatarLinkGenerator == null ? null : AvatarLinkGenerator(s)));
+                .ForMember(d => d.Link, m => m.MapFrom(s => AvatarLinkGenerator == null ? null : AvatarLinkGenerator(s.Author)));
             CreateProjection<PostAttach, LinkMetadataModel>()
                 .ForMember(d => d.Link, m => m.MapFrom(s => PostAttachLinkGenerator == null ? null : PostAttachLinkGenerator(s)));
 

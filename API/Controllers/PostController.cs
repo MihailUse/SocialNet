@@ -24,7 +24,7 @@ namespace API.Controllers
             _projectionGeneratorService.PostAttachLinkGenerator =
                 x => Url.ControllerAction<AttachController>(nameof(AttachController.GetPostAttach), new { postId = x.PostId, attachId = x.Id });
             _projectionGeneratorService.AvatarLinkGenerator =
-                x => Url.ControllerAction<AttachController>(nameof(AttachController.GetUserAvatar), new { userId = x.UserId });
+                x => Url.ControllerAction<AttachController>(nameof(AttachController.GetUserAvatar), new { userId = x.Id });
         }
 
         // for testing

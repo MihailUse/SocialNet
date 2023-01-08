@@ -22,7 +22,7 @@ namespace API.Controllers
             _projectionGeneratorService = projectionGeneratorService;
 
             _projectionGeneratorService.AvatarLinkGenerator =
-                x => Url.ControllerAction<AttachController>(nameof(AttachController.GetUserAvatar), new { userId = x.UserId });
+                x => Url.ControllerAction<AttachController>(nameof(AttachController.GetUserAvatar), new { userId = x.Id });
         }
 
         [HttpGet]

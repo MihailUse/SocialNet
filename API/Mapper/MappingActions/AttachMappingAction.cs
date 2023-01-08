@@ -16,7 +16,7 @@ namespace API.MappingActions
 
         public void Process(Avatar source, LinkMetadataModel destination, ResolutionContext context)
         {
-            destination.Link = _urlService.AvatarLinkGenerator?.Invoke(source);
+            destination.Link = _urlService.AvatarLinkGenerator?.Invoke(source.User);
         }
     }
 }

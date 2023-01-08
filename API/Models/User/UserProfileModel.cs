@@ -13,6 +13,7 @@ namespace API.Models.User
         public int FollowerCount { get; set; }
         public int FollowingCount { get; set; }
         public int PostCount { get; set; }
+        public string? AvatarLink { get; set; }
 
         public LinkMetadataModel? Avatar { get; set; }
     }
