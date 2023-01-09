@@ -30,32 +30,32 @@ namespace API.Controllers
         // for testing
         [HttpGet]
         [AllowAnonymous]
-        public IEnumerable<PostModel> GetPosts(int skip = 0, int take = 20, Guid? requestUserId = null)
+        public IEnumerable<PostModel> GetPosts(int skip = 0, int take = 20, DateTimeOffset? fromTime = null, Guid? requestUserId = null)
         {
             _projectionGeneratorService.RequestUserId = requestUserId ?? Guid.Empty;
-            return _postService.GetPosts(skip, take);
+            return _postService.GetPosts(skip, take, fromTime ?? DateTimeOffset.UtcNow);
         }
 
         [HttpGet]
-        public IEnumerable<PostModel> GetPersonalPosts(int skip = 0, int take = 20)
+        public IEnumerable<PostModel> GetPersonalPosts(int skip = 0, int take = 20, DateTimeOffset? fromTime = null)
         {
             Guid userId = User.GetClaimValue<Guid>(TokenClaimTypes.UserId);
             _projectionGeneratorService.RequestUserId = userId;
-            return _postService.GetPersonalPosts(userId, skip, take);
+            return _postService.GetPersonalPosts(userId, skip, take, fromTime ?? DateTimeOffset.UtcNow);
         }
 
         [HttpGet]
-        public IEnumerable<PostModel> GetUserPosts(Guid userId, int skip = 0, int take = 20)
+        public IEnumerable<PostModel> GetUserPosts(Guid userId, int skip = 0, int take = 20, DateTimeOffset? fromTime = null)
         {
             _projectionGeneratorService.RequestUserId = User.GetClaimValue<Guid>(TokenClaimTypes.UserId);
-            return _postService.GetUserPosts(userId, skip, take);
+            return _postService.GetUserPosts(userId, skip, take, fromTime ?? DateTimeOffset.UtcNow);
         }
 
         [HttpGet]
-        public IEnumerable<PostModel> GetPostsByTag(Guid tagId, int skip = 0, int take = 20)
+        public IEnumerable<PostModel> GetPostsByTag(Guid tagId, int skip = 0, int take = 20, DateTimeOffset? fromTime = null)
         {
             _projectionGeneratorService.RequestUserId = User.GetClaimValue<Guid>(TokenClaimTypes.UserId);
-            return _postService.GetPostsByTag(tagId, skip, take);
+            return _postService.GetPostsByTag(tagId, skip, take, fromTime ?? DateTimeOffset.UtcNow);
         }
 
         [HttpPost]

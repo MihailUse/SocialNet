@@ -26,9 +26,9 @@ namespace API.Controllers
         }
 
         [HttpGet]
-        public IEnumerable<CommentModel> GetPostComments(Guid postId, int skip = 0, int take = 20, Guid? requestUserId = null)
+        public IEnumerable<CommentModel> GetPostComments(Guid postId, int skip = 0, int take = 20)
         {
-            _projectionGeneratorService.RequestUserId = requestUserId ?? Guid.Empty;
+            _projectionGeneratorService.RequestUserId = User.GetClaimValue<Guid>(TokenClaimTypes.UserId);
             return _commentService.GetPostComments(postId, skip, take);
         }
 

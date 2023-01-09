@@ -25,9 +25,10 @@ namespace API.Services
             _projectionGeneratorService = projectionGeneratorService;
         }
 
-        public IEnumerable<PostModel> GetPosts(int skip, int take)
+        public IEnumerable<PostModel> GetPosts(int skip, int take, DateTimeOffset fromTime)
         {
             return _dataContext.Posts
+                .Where(x => x.CreatedAt < fromTime)
                 .ProjectTo<PostModel>(_mapper.ConfigurationProvider, _projectionGeneratorService)
                 .OrderByDescending(x => x.CreatedAt)
                 .Skip(skip)
@@ -36,13 +37,14 @@ namespace API.Services
                 .AsEnumerable();
         }
 
-        public IEnumerable<PostModel> GetPersonalPosts(Guid userId, int skip, int take)
+        public IEnumerable<PostModel> GetPersonalPosts(Guid userId, int skip, int take, DateTimeOffset fromTime)
         {
             return _dataContext.Posts
                 .Where(x =>
-                    x.Author.Followings!.Where(f => f.FollowingId == userId).Any() ||
+                    x.CreatedAt < fromTime &&
+                    (x.Author.Followings!.Where(f => f.FollowingId == userId).Any() ||
                     x.Tags!.Where(t => t.Tag.UserTags!.Where(f => f.UserId == userId).Any()).Any() ||
-                    x.AuthorId == userId
+                    x.AuthorId == userId)
                 )
                 .ProjectTo<PostModel>(_mapper.ConfigurationProvider, _projectionGeneratorService)
                 .OrderByDescending(x => x.CreatedAt)
@@ -52,10 +54,10 @@ namespace API.Services
                 .AsEnumerable();
         }
 
-        public IEnumerable<PostModel> GetUserPosts(Guid userId, int skip, int take)
+        public IEnumerable<PostModel> GetUserPosts(Guid userId, int skip, int take, DateTimeOffset fromTime)
         {
             return _dataContext.Posts
-                .Where(x => x.Author.Id == userId)
+                .Where(x => x.Author.Id == userId && x.CreatedAt < fromTime)
                 .ProjectTo<PostModel>(_mapper.ConfigurationProvider, _projectionGeneratorService)
                 .OrderByDescending(x => x.CreatedAt)
                 .Skip(skip)
@@ -99,10 +101,10 @@ namespace API.Services
             return post;
         }
 
-        public IEnumerable<PostModel> GetPostsByTag(Guid tagId, int skip, int take)
+        public IEnumerable<PostModel> GetPostsByTag(Guid tagId, int skip, int take, DateTimeOffset fromTime)
         {
             return _dataContext.Posts
-                .Where(x => x.Tags!.Any(t => t.TagId == tagId))
+                .Where(x => x.Tags!.Any(t => t.TagId == tagId) && x.CreatedAt < fromTime)
                 .ProjectTo<PostModel>(_mapper.ConfigurationProvider, _projectionGeneratorService)
                 .OrderByDescending(x => x.CreatedAt)
                 .Skip(skip)
