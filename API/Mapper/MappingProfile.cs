@@ -24,7 +24,7 @@ namespace API.Mapper
             #region define Maps
             // User
             CreateMap<User, UserModel>()
-                .ForMember(d => d.AvatarLink, m => m.MapFrom(s => AvatarLinkGenerator == null ? null : AvatarLinkGenerator(s)));
+                .ForMember(d => d.AvatarLink, m => m.MapFrom(s => AvatarLinkGenerator == null || s.Avatar == null ? null : AvatarLinkGenerator(s)));
             CreateMap<CreateUserModel, User>()
                 .ForMember(d => d.PasswordHash, m => m.MapFrom(s => HashHelper.GetHash(s.Password)));
 
@@ -45,7 +45,7 @@ namespace API.Mapper
             // User
             CreateProjection<User, SearchListUserModel>()
                 .ForMember(d => d.FollowerCount, m => m.MapFrom(s => s.Followers!.Count))
-                .ForMember(d => d.AvatarLink, m => m.MapFrom(s => AvatarLinkGenerator == null ? null : AvatarLinkGenerator(s)));
+                .ForMember(d => d.AvatarLink, m => m.MapFrom(s => AvatarLinkGenerator == null || s.Avatar == null ? null : AvatarLinkGenerator(s)));
             CreateProjection<User, UserProfileModel>()
                 .ForMember(d => d.AvatarLink, m => m.MapFrom(s => AvatarLinkGenerator == null ? null : AvatarLinkGenerator(s)))
                 .ForMember(d => d.IsFollowing, m => m.MapFrom(s => s.Followers!.Any(x => x.FollewerId == RequestUserId)))
