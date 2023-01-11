@@ -65,7 +65,7 @@ namespace API.Controllers
             return await _postService.CreatePost(userId, createModel);
         }
 
-        [HttpPost]
+        [HttpPatch]
         public async Task<bool> ChangeLikeStatus(Guid postId)
         {
             Guid userId = User.GetClaimValue<Guid>(TokenClaimTypes.UserId);

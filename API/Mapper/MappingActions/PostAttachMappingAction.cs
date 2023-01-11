@@ -3,7 +3,7 @@ using API.Services;
 using AutoMapper;
 using DAL.Entities;
 
-namespace API.Mapper.MappingActions
+namespace API.MappingActions
 {
     public class PostAttachMappingAction : IMappingAction<PostAttach, LinkMetadataModel>
     {

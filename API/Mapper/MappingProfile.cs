@@ -23,8 +23,7 @@ namespace API.Mapper
 
             #region define Maps
             // User
-            CreateMap<User, UserModel>()
-                .ForMember(d => d.AvatarLink, m => m.MapFrom(s => AvatarLinkGenerator == null || s.Avatar == null ? null : AvatarLinkGenerator(s)));
+            CreateMap<User, UserModel>().AfterMap<UserModelMappingAction>();
             CreateMap<CreateUserModel, User>()
                 .ForMember(d => d.PasswordHash, m => m.MapFrom(s => HashHelper.GetHash(s.Password)));
 
@@ -38,11 +37,13 @@ namespace API.Mapper
             CreateMap<MetadataModel, Avatar>();
             CreateMap<MetadataModel, PostAttach>();
             CreateMap<Avatar, LinkMetadataModel>().AfterMap<AvatarAttachMappingAction>();
+            CreateMap<PostAttach, LinkMetadataModel>().AfterMap<PostAttachMappingAction>();
             #endregion
-
 
             #region define Projections
             // User
+            CreateProjection<User, UserModel>()
+                .ForMember(d => d.AvatarLink, m => m.MapFrom(s => AvatarLinkGenerator == null || s.Avatar == null ? null : AvatarLinkGenerator(s)));
             CreateProjection<User, SearchListUserModel>()
                 .ForMember(d => d.FollowerCount, m => m.MapFrom(s => s.Followers!.Count))
                 .ForMember(d => d.AvatarLink, m => m.MapFrom(s => AvatarLinkGenerator == null || s.Avatar == null ? null : AvatarLinkGenerator(s)));
@@ -72,7 +73,7 @@ namespace API.Mapper
             CreateProjection<Attach, LinkMetadataModel>()
                 .ForMember(d => d.Link, m => m.MapFrom(s => AttachLinkGenerator == null ? null : AttachLinkGenerator(s)));
             CreateProjection<Avatar, LinkMetadataModel>()
-                .ForMember(d => d.Link, m => m.MapFrom(s => AvatarLinkGenerator == null ? null : AvatarLinkGenerator(s.Author)));
+                .ForMember(d => d.Link, m => m.MapFrom(s => AvatarLinkGenerator == null ? null : AvatarLinkGenerator(s.User)));
             CreateProjection<PostAttach, LinkMetadataModel>()
                 .ForMember(d => d.Link, m => m.MapFrom(s => PostAttachLinkGenerator == null ? null : PostAttachLinkGenerator(s)));
 

@@ -39,7 +39,7 @@ namespace API.Controllers
             return await _commentService.CreateComment(userId, createModel);
         }
 
-        [HttpPost]
+        [HttpPatch]
         public async Task<bool> ChangeLikeStatus(Guid commentId)
         {
             Guid userId = User.GetClaimValue<Guid>(TokenClaimTypes.UserId);

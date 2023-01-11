@@ -36,7 +36,7 @@ namespace API.Controllers
             return _tagService.GetTagById(tagId);
         }
 
-        [HttpPost]
+        [HttpPatch]
         public async Task<bool> ChangeFollowStatus(Guid tagId)
         {
             Guid userId = User.GetClaimValue<Guid>(TokenClaimTypes.UserId);

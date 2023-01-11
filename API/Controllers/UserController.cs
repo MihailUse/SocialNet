@@ -64,14 +64,7 @@ namespace API.Controllers
             return await _userService.GetUserProfile(userId);
         }
 
-        [HttpPost]
-        public async Task SetUserAvatar(MetadataModel metadata)
-        {
-            Guid userId = User.GetClaimValue<Guid>(TokenClaimTypes.UserId);
-            await _userService.SetUserAvatar(userId, metadata);
-        }
-
-        [HttpPost]
+        [HttpPatch]
         public async Task<bool> ChangeFollowStatus(Guid followingId)
         {
             Guid followerId = User.GetClaimValue<Guid>(TokenClaimTypes.UserId);

@@ -113,7 +113,7 @@ namespace API.Services
             return attach;
         }
 
-        public async Task<UserModel> UpdateUser(Guid userId, UpdateUserModel userOptions)
+        public async Task UpdateUser(Guid userId, UpdateUserModel userOptions)
         {
             User user = await GetUserById(userId);
 
@@ -121,8 +121,20 @@ namespace API.Services
             user.FullName = userOptions.FullName ?? user.FullName;
             user.About = userOptions.About ?? user.About;
 
+            if (await CheckEmailExists(user.Email, userId))
+                throw new InvalidParameterServiceException("Email already exists");
+
+            if (await CheckNicknameExists(user.Nickname, userId))
+                throw new InvalidParameterServiceException("Nickname already exists");
+
+            if (userOptions.Avatar != null)
+            {
+                user.Avatar = _mapper.Map<Avatar>(userOptions.Avatar);
+                user.Avatar.AuthorId = userId;
+                _attachService.SaveAttach(user.Avatar.Id);
+            }
+            _dataContext.Users.Update(user);
             await _dataContext.SaveChangesAsync();
-            return _mapper.Map<UserModel>(user);
         }
 
         public async Task DeleteUser(Guid userId)
@@ -161,19 +173,6 @@ namespace API.Services
             return follower == null;
         }
 
-        public async Task SetUserAvatar(Guid userId, MetadataModel metadata)
-        {
-            User user = await GetUserById(userId);
-            Avatar avatar = _mapper.Map<Avatar>(metadata);
-            avatar.AuthorId = userId;
-            user.Avatar = avatar;
-
-            _attachService.SaveAttach(metadata.Id);
-
-            _dataContext.Users.Update(user);
-            await _dataContext.SaveChangesAsync();
-        }
-
         public async Task SetNotificationToken(Guid userId, string? token)
         {
             User user = await GetUserById(userId);
@@ -187,14 +186,16 @@ namespace API.Services
             return user.NotificationToken;
         }
 
-        private async Task<bool> CheckNicknameExists(string nickname)
+        private async Task<bool> CheckNicknameExists(string nickname, Guid? excludeUserId = null)
         {
-            return await _dataContext.Users.AnyAsync(x => x.Nickname == nickname);
+            return await _dataContext.Users
+                .AnyAsync(x => x.Nickname == nickname && x.Id != excludeUserId);
         }
 
-        private async Task<bool> CheckEmailExists(string email)
+        private async Task<bool> CheckEmailExists(string email, Guid? excludeUserId = null)
         {
-            return await _dataContext.Users.AnyAsync(x => x.Email.ToLower() == email.ToLower());
+            return await _dataContext.Users
+                .AnyAsync(x => x.Email.ToLower() == email.ToLower() && x.Id != excludeUserId);
         }
 
         private async Task<User> GetUserById(Guid userId)
