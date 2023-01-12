@@ -1,5 +1,11 @@
 ﻿using API.Configs;
+using API.Exceptions;
 using API.Models.Notification;
+using AutoMapper;
+using AutoMapper.QueryableExtensions;
+using DAL;
+using DAL.Entities;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
 using PushSharp.Common;
@@ -12,16 +18,88 @@ namespace API.Services
     {
         private const int _maxPayloadLength = 2048;
         private const int _maxAndroidPayloadLength = 4096;
+
         private readonly List<string> _messages;
+        private readonly IMapper _mapper;
+        private readonly DataContext _dataContext;
         private readonly NotificationConfig.GoogleConfig _config;
 
-        public NotificationService(IOptions<NotificationConfig> config)
+        public NotificationService(
+            IMapper mapper,
+            DataContext dataContext,
+            IOptions<NotificationConfig> config
+        )
         {
+            _mapper = mapper;
+            _dataContext = dataContext;
             _messages = new List<string>();
             _config = config.Value.Google ?? throw new ArgumentException("Google configuration not found");
         }
 
-        public List<string> SendNotification(string notificationToken, NotificationModel notificationModel)
+        public IEnumerable<NotificationModel> GetNotifications(Guid userId, int skip, int take, DateTimeOffset fromTime)
+        {
+            return _dataContext.Notifications
+                .Where(x =>
+                    x.ToUserId == userId &&
+                    x.CreatedAt < fromTime &&
+                    (!x.ViewedAt.HasValue || x.ViewedAt > DateTimeOffset.UtcNow.AddDays(-1))
+                )
+                .ProjectTo<NotificationModel>(_mapper.ConfigurationProvider)
+                .OrderByDescending(x => x.CreatedAt)
+                .Skip(skip)
+                .Take(take)
+                .AsNoTracking()
+                .AsEnumerable();
+        }
+
+        public async Task DeleteNotification(Guid userId, Guid notificationId)
+        {
+            Notification notification = await GetNotificationById(notificationId);
+
+            if (notification.ToUserId != userId)
+                throw new AccessDeniedServiceException("Access denied");
+
+            _dataContext.Notifications.Remove(notification);
+            await _dataContext.SaveChangesAsync();
+        }
+
+        public async Task CreateNotification(Guid? fromUserId, Guid toUserId, NotificationType notificationType, AlertModel alertModel)
+        {
+            Notification notification = new Notification()
+            {
+                Title = alertModel.Title,
+                SubTitle = alertModel.Subtitle,
+                Body = alertModel.Body,
+                ToUserId = toUserId,
+                FromUserId = fromUserId,
+                NotificationType = notificationType,
+            };
+
+            await _dataContext.AddAsync(notification);
+            await _dataContext.SaveChangesAsync();
+
+            // if  there is a notificationToken then send notification
+            string? notificationToken = await _dataContext.Users
+                .Where(x => x.Id == toUserId)
+                .Select(x => x.NotificationToken)
+                .FirstOrDefaultAsync();
+
+            if (notificationToken != null)
+            {
+                Dictionary<string, string?> customData = new Dictionary<string, string?>(){
+                    {"fromUserId", fromUserId?.ToString() },
+                    {"notificationId", notification.Id.ToString() },
+                };
+
+                SendNotification(notificationToken, new PushModel()
+                {
+                    Alert = alertModel,
+                    CustomData = customData
+                });
+            }
+        }
+
+        public List<string> SendNotification(string notificationToken, PushModel notificationModel)
         {
             _messages.Clear();
 
@@ -46,6 +124,17 @@ namespace API.Services
             gcmBroker.Stop();
 
             return _messages;
+        }
+
+        private async Task<Notification> GetNotificationById(Guid notificationId)
+        {
+            Notification? notification = await _dataContext.Notifications
+                .FirstOrDefaultAsync(x => x.Id == notificationId);
+
+            if (notification == null)
+                throw new NotFoundServiceException("Notification not found");
+
+            return notification;
         }
 
         private JObject CreateMessage(AlertModel alert)

@@ -1,8 +1,6 @@
-﻿using DAL.Entities;
-
-namespace API.Models.Notification
+﻿namespace DAL.Entities
 {
-    public class NotificationModel
+    public class Notification
     {
         public Guid Id { get; set; }
         public string Title { get; set; } = null!;
@@ -13,6 +11,9 @@ namespace API.Models.Notification
         public NotificationType NotificationType { get; set; }
 
         public DateTimeOffset? ViewedAt { get; set; }
-        public DateTimeOffset CreatedAt { get; set; }
+        public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+
+        public virtual User ToUser { get; set; } = null!;
+        public virtual User? FromUser { get; set; }
     }
 }

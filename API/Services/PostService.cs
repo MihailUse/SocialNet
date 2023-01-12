@@ -1,4 +1,5 @@
 ﻿using API.Exceptions;
+using API.Models.Notification;
 using API.Models.Post;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
@@ -14,14 +15,23 @@ namespace API.Services
         private readonly TagService _tagService;
         private readonly DataContext _dataContext;
         private readonly AttachService _attachService;
+        private readonly NotificationService _notificationService;
         private readonly ProjectionGeneratorService _projectionGeneratorService;
 
-        public PostService(IMapper mapper, TagService tagService, DataContext dataContext, AttachService attachService, ProjectionGeneratorService projectionGeneratorService)
+        public PostService(
+            IMapper mapper,
+            TagService tagService,
+            DataContext dataContext,
+            AttachService attachService,
+            NotificationService notificationService,
+            ProjectionGeneratorService projectionGeneratorService
+        )
         {
             _mapper = mapper;
             _tagService = tagService;
             _dataContext = dataContext;
             _attachService = attachService;
+            _notificationService = notificationService;
             _projectionGeneratorService = projectionGeneratorService;
         }
 
@@ -144,12 +154,33 @@ namespace API.Services
                 .FirstOrDefaultAsync(x => x.PostId == postId && x.UserId == userId);
 
             if (postLike == null)
-                _dataContext.PostLikes.Add(new PostLike(userId, postId));
-            else
-                _dataContext.PostLikes.Remove(postLike);
+            {
+                postLike = new PostLike(userId, postId);
+                await _dataContext.PostLikes.AddAsync(postLike);
+                await _dataContext.SaveChangesAsync();
+                await SendNotification(userId, postId);
+                return true;
+            }
 
+            _dataContext.PostLikes.Remove(postLike);
             await _dataContext.SaveChangesAsync();
-            return postLike == null;
+            return false;
+
+        }
+
+        private async Task SendNotification(Guid userId, Guid postId)
+        {
+            PostLike postLike = await _dataContext.PostLikes
+                .Include(x => x.Post)
+                .Include(x => x.User)
+                .FirstAsync(x => x.UserId == userId && x.PostId == postId);
+
+            await _notificationService.CreateNotification(
+                userId,
+                postLike.Post.AuthorId,
+                NotificationType.LikePost,
+                new AlertModel("Liked post", null, $"@{postLike.User.Nickname} liked your post")
+            );
         }
 
         private async Task<bool> CheckPostExists(Guid postId)

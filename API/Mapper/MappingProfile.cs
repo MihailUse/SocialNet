@@ -1,6 +1,7 @@
 using API.MappingActions;
 using API.Models.Attach;
 using API.Models.Comment;
+using API.Models.Notification;
 using API.Models.Post;
 using API.Models.Tag;
 using API.Models.User;
@@ -82,6 +83,9 @@ namespace API.Mapper
                 .ForMember(d => d.IsFollowed, m => m.MapFrom(s => s.UserTags!.Any(x => x.UserId == RequestUserId)))
                 .ForMember(d => d.PostCount, m => m.MapFrom(s => s.PostTags!.Count))
                 .ForMember(d => d.FollowerCount, m => m.MapFrom(s => s.UserTags!.Count));
+
+            // Totification 
+            CreateProjection<Notification, NotificationModel>();
             #endregion
         }
     }

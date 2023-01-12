@@ -1,6 +1,7 @@
 ﻿using DAL.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Npgsql;
 using System.Linq.Expressions;
 
 namespace DAL
@@ -20,8 +21,10 @@ namespace DAL
         public DbSet<Tag> Tags => Set<Tag>();
         public DbSet<UserTag> UserTags => Set<UserTag>();
         public DbSet<PostTag> PostTags => Set<PostTag>();
+        public DbSet<Notification> Notifications => Set<Notification>();
 
         public DataContext(DbContextOptions<DataContext> options) : base(options) { }
+        static DataContext() => NpgsqlConnection.GlobalTypeMapper.MapEnum<NotificationType>();
 
         #region override SaveChanges
         public override int SaveChanges()
@@ -57,7 +60,9 @@ namespace DAL
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             ConfigureSoftDeleteFilter(modelBuilder);
+            modelBuilder.HasPostgresEnum<NotificationType>();
 
+            // followers
             modelBuilder.Entity<Follower>()
                 .HasKey(x => new { x.FollewerId, x.FollowingId });
 

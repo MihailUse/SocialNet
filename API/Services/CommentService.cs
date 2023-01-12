@@ -1,5 +1,6 @@
 ﻿using API.Exceptions;
 using API.Models.Comment;
+using API.Models.Notification;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using DAL;
@@ -13,13 +14,21 @@ namespace API.Services
         private readonly IMapper _mapper;
         private readonly DataContext _dataContext;
         private readonly PostService _postService;
+        private readonly NotificationService _notificationService;
         private readonly ProjectionGeneratorService _projectionGeneratorService;
 
-        public CommentService(IMapper mapper, DataContext dataContext, PostService postService, ProjectionGeneratorService projectionGeneratorService)
+        public CommentService(
+            IMapper mapper,
+            DataContext dataContext,
+            PostService postService,
+            NotificationService notificationService,
+            ProjectionGeneratorService projectionGeneratorService
+        )
         {
             _mapper = mapper;
             _dataContext = dataContext;
             _postService = postService;
+            _notificationService = notificationService;
             _projectionGeneratorService = projectionGeneratorService;
         }
 
@@ -70,12 +79,32 @@ namespace API.Services
                 .FirstOrDefaultAsync(x => x.CommentId == commentId && x.UserId == userId);
 
             if (commentLike == null)
-                _dataContext.CommentLikes.Add(new CommentLike(userId, commentId));
-            else
-                _dataContext.CommentLikes.Remove(commentLike);
+            {
+                commentLike = new CommentLike(userId, commentId);
+                await _dataContext.CommentLikes.AddAsync(commentLike);
+                await _dataContext.SaveChangesAsync();
+                await SendNotification(userId, commentId);
+                return true;
+            }
 
+            _dataContext.CommentLikes.Remove(commentLike);
             await _dataContext.SaveChangesAsync();
-            return commentLike == null;
+            return false;
+        }
+
+        private async Task SendNotification(Guid userId, Guid commentId)
+        {
+            CommentLike postLike = await _dataContext.CommentLikes
+                .Include(x => x.Comment)
+                .Include(x => x.User)
+                .FirstAsync(x => x.UserId == userId && x.CommentId == commentId);
+
+            await _notificationService.CreateNotification(
+                userId,
+                postLike.Comment.AuthorId,
+                NotificationType.LikeComment,
+                new AlertModel("Liked comment", null, $"@{postLike.User.Nickname} liked your comment")
+            );
         }
 
         private async Task<bool> CheckCommentExists(Guid commentId)

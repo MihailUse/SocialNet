@@ -22,6 +22,13 @@ namespace API.Controllers
             _notificationService = notificationService;
         }
 
+        [HttpGet]
+        public IEnumerable<NotificationModel> GetNotifications(int skip = 0, int take = 20, DateTimeOffset? fromTime = null)
+        {
+            Guid userId = User.GetClaimValue<Guid>(TokenClaimTypes.UserId);
+            return _notificationService.GetNotifications(userId, skip, take, fromTime ?? DateTimeOffset.UtcNow);
+        }
+
         [HttpPost]
         public async Task<List<string>> SendNotification(SendNotificationModel sendNotificationModel)
         {
@@ -47,6 +54,13 @@ namespace API.Controllers
         {
             Guid userId = User.GetClaimValue<Guid>(TokenClaimTypes.UserId);
             await _userService.SetNotificationToken(userId, null);
+        }
+
+        [HttpDelete]
+        public async Task DeleteNotification(Guid notificationId)
+        {
+            Guid userId = User.GetClaimValue<Guid>(TokenClaimTypes.UserId);
+            await _notificationService.DeleteNotification(userId, notificationId);
         }
     }
 }

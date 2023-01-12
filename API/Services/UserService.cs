@@ -1,5 +1,6 @@
 using API.Exceptions;
 using API.Models.Attach;
+using API.Models.Notification;
 using API.Models.User;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
@@ -15,13 +16,21 @@ namespace API.Services
         private readonly IMapper _mapper;
         private readonly DataContext _dataContext;
         private readonly AttachService _attachService;
+        private readonly NotificationService _notificationService;
         private readonly ProjectionGeneratorService _projectionGeneratorService;
 
-        public UserService(IMapper mapper, DataContext context, AttachService attachService, ProjectionGeneratorService projectionGeneratorService)
+        public UserService(
+            IMapper mapper,
+            DataContext context,
+            AttachService attachService,
+            NotificationService notificationService,
+            ProjectionGeneratorService projectionGeneratorService
+        )
         {
             _mapper = mapper;
             _dataContext = context;
             _attachService = attachService;
+            _notificationService = notificationService;
             _projectionGeneratorService = projectionGeneratorService;
         }
 
@@ -165,12 +174,24 @@ namespace API.Services
                 .FirstOrDefaultAsync(x => x.FollewerId == followerId && x.FollowingId == following.Id);
 
             if (follower == null)
-                _dataContext.Followers.Add(new Follower(followerId, followingId));
-            else
-                _dataContext.Followers.Remove(follower);
+            {
+                follower = new Follower(followerId, followingId);
+                await _dataContext.Followers.AddAsync(follower);
+                await _dataContext.SaveChangesAsync();
 
+                User? fromUser = await _dataContext.Users.FindAsync(followerId);
+                await _notificationService.CreateNotification(
+                    followerId,
+                    followingId,
+                    NotificationType.NewFollower,
+                    new AlertModel("New follower", null, $"@{fromUser!.Nickname} has subscribed to you")
+                );
+                return true;
+            }
+
+            _dataContext.Followers.Remove(follower);
             await _dataContext.SaveChangesAsync();
-            return follower == null;
+            return false;
         }
 
         public async Task SetNotificationToken(Guid userId, string? token)
